@@ -36,22 +36,84 @@
 
 /* Custom Styles */
 :root {
-  --purple-light: #e8e5ff;
-  --purple-strong: #6a5acd;
-  --green-light: #d4edda;
-  --green-strong: #23d160;
-  /* Original green for selected */
-  --blue-light: #e3f2fd;
-  --blue-strong: #1976d2;
-  --red-light: #ffebee;
-  --red-strong: #d32f2f;
-  --orange-light: #fff3e0;
-  --orange-strong: #ff9800;
+  --primary: #485fc7;
+  --primary-light: #eef0fb;
+  --purple-light: #ede9fe;
+  --purple-strong: #7c3aed;
+  --green-light: #dcfce7;
+  --green-strong: #16a34a;
+  --blue-light: #dbeafe;
+  --blue-strong: #2563eb;
+  --red-light: #fee2e2;
+  --red-strong: #dc2626;
+  --orange-light: #ffedd5;
+  --orange-strong: #ea580c;
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-500: #6b7280;
+  --gray-700: #374151;
+  --gray-900: #111827;
+  --radius: 8px;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
+  --transition: 0.15s ease;
+}
+
+body {
+  color: var(--gray-700);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1.title,
+h2.title {
+  color: var(--gray-900);
+  font-weight: 700;
+}
+
+/* Global input/button refinements */
+.input,
+.textarea {
+  border-color: var(--gray-200);
+  border-radius: var(--radius);
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.input:focus,
+.textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(72, 95, 199, 0.15);
+}
+
+.button {
+  border-radius: var(--radius);
+  font-weight: 500;
+  transition: all var(--transition);
+}
+
+.button:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.button:active {
+  transform: translateY(0);
 }
 
 .button.category-pill {
   background-color: var(--purple-light);
   color: var(--purple-strong);
+  border-radius: 9999px;
+  border: 1px solid transparent;
+  font-size: 0.8125rem;
+}
+
+.button.category-pill:hover {
+  border-color: var(--purple-strong);
 }
 
 .button.category-pill.is-selected {
@@ -133,10 +195,10 @@
   font-size: 1.5rem;
   font-weight: bold;
   color: white;
-  background-color: #485fc7;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background-color: var(--primary);
+  box-shadow: var(--shadow-md);
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all var(--transition);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -169,9 +231,9 @@
 }
 
 .fab:hover {
-  background-color: #363636;
+  background-color: var(--gray-900);
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow-lg);
 }
 
 .fab.sync:hover {
@@ -195,7 +257,7 @@
 
 .fab:active {
   transform: translateY(0);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow);
 }
 
 .fab .icon {
@@ -206,6 +268,13 @@
 .button.tag-pill {
   background-color: var(--green-light);
   color: var(--green-strong);
+  border-radius: 9999px;
+  border: 1px solid transparent;
+  font-size: 0.8125rem;
+}
+
+.button.tag-pill:hover {
+  border-color: var(--green-strong);
 }
 
 .button.tag-pill.is-selected {
@@ -220,34 +289,46 @@
 .pill.category {
   background-color: var(--purple-light);
   color: var(--purple-strong);
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  font-size: 0.75rem;
-  font-weight: 500;
+  padding: 0.2rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 600;
   display: inline-block;
   pointer-events: none;
+  letter-spacing: 0.01em;
 }
 
 .pill.tag {
   background-color: var(--green-light);
   color: var(--green-strong);
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  font-size: 0.75rem;
-  font-weight: 500;
+  padding: 0.2rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 600;
   display: inline-block;
   pointer-events: none;
+  letter-spacing: 0.01em;
 }
 
 .pill.is-small {
   padding: 0.125rem 0.375rem;
-  font-size: 0.7rem;
+  font-size: 0.65rem;
 }
 
 .task-item {
   display: flex;
   align-items: center;
-  margin-bottom: 0.5rem;
+  padding: 0.625rem 0.75rem;
+  margin-bottom: 0.375rem;
+  background: white;
+  border: 1px solid var(--gray-100);
+  border-radius: var(--radius);
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.task-item:hover {
+  border-color: var(--gray-200);
+  box-shadow: var(--shadow-sm);
 }
 
 .task-item .task-name {
@@ -258,27 +339,44 @@
   cursor: pointer;
   text-align: left;
   padding: 0;
-  color: #363636;
+  color: var(--gray-900);
+  font-weight: 450;
+  flex: 1;
+  line-height: 1.4;
+}
+
+.task-item .task-name:hover {
+  color: var(--primary);
+}
+
+.task-item.done {
+  opacity: 0.6;
 }
 
 .task-item.done .task-name {
   text-decoration: line-through;
+  color: var(--gray-500);
 }
 
 .checkbox {
   width: 20px;
   height: 20px;
-  border: 2px solid #dbdbdb;
-  border-radius: 4px;
+  min-width: 20px;
+  border: 2px solid var(--gray-300);
+  border-radius: 6px;
   cursor: pointer;
   position: relative;
   background-color: white;
-  transition: background-color 0.2s, border-color 0.2s;
+  transition: all var(--transition);
+}
+
+.checkbox:hover {
+  border-color: var(--primary);
 }
 
 .checkbox[aria-checked="true"] {
-  background-color: #485fc7;
-  border-color: #485fc7;
+  background-color: var(--primary);
+  border-color: var(--primary);
 }
 
 .checkbox[aria-checked="true"]::after {
@@ -288,12 +386,20 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  font-size: 14px;
+  font-size: 12px;
+  line-height: 1;
 }
 
 #filters .button {
-  margin-right: 5px;
-  margin-bottom: 5px;
+  margin-right: 0.25rem;
+  margin-bottom: 0.375rem;
+}
+
+#filters {
+  padding: 0.75rem;
+  background: var(--gray-50);
+  border-radius: var(--radius);
+  border: 1px solid var(--gray-100);
 }
 
 /* Sync indicator styles */
@@ -376,47 +482,48 @@
   }
 }
 
-/* Desktop Navigation Tabs - Simplified for debugging */
+/* Desktop Navigation Tabs */
 .desktop-nav-tabs {
   display: flex !important;
   flex-direction: row;
-  gap: 0.5rem;
-  background: #f8f9fa;
-  padding: 0.5rem;
-  border-radius: 8px;
-  border: 2px solid #485fc7;
+  gap: 0.25rem;
+  background: var(--gray-100);
+  padding: 0.25rem;
+  border-radius: var(--radius);
+  border: none;
   margin: 1rem 0;
 }
 
 .tab-button {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.25rem;
-  border: 2px solid #485fc7;
-  background: white;
+  gap: 0.375rem;
+  padding: 0.5rem 1rem;
+  border: none;
+  background: transparent;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #485fc7;
-  transition: all 0.2s ease;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--gray-500);
+  transition: all var(--transition);
 }
 
 .tab-button:hover {
-  background: #485fc7;
-  color: white;
-  transform: translateY(-2px);
+  background: white;
+  color: var(--gray-700);
+  box-shadow: var(--shadow-sm);
 }
 
 .tab-button.active {
-  background: #485fc7;
-  color: white;
-  box-shadow: 0 4px 8px rgba(72, 95, 199, 0.3);
+  background: white;
+  color: var(--primary);
+  box-shadow: var(--shadow-sm);
+  font-weight: 600;
 }
 
 .tab-button .icon {
-  font-size: 1rem;
+  font-size: 0.875rem;
 }
 
 /* Mobile Navigation Bar */
@@ -426,13 +533,14 @@
   left: 0;
   right: 0;
   background: white;
-  border-top: 1px solid #dbdbdb;
+  border-top: 1px solid var(--gray-100);
   display: flex;
   justify-content: space-around;
   align-items: center;
-  padding: 0.5rem 0;
+  padding: 0.375rem 0;
+  padding-bottom: env(safe-area-inset-bottom, 0.375rem);
   z-index: 1001;
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 -1px 8px rgba(0, 0, 0, 0.06);
 }
 
 .nav-item {
@@ -440,41 +548,42 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 0.5rem 1rem;
+  padding: 0.375rem 0.75rem;
   cursor: pointer;
-  transition: all 0.2s ease;
-  border-radius: 8px;
-  min-width: 60px;
+  transition: all var(--transition);
+  border-radius: var(--radius);
+  min-width: 56px;
 }
 
 .nav-item:hover {
-  background-color: #f5f5f5;
+  background-color: var(--gray-50);
 }
 
 .nav-item.active {
-  color: #485fc7;
+  color: var(--primary);
 }
 
 .nav-item.active .nav-icon {
-  color: #485fc7;
+  color: var(--primary);
 }
 
 .nav-icon {
-  font-size: 1.5rem;
-  margin-bottom: 0.25rem;
-  color: #666;
-  transition: color 0.2s ease;
+  font-size: 1.25rem;
+  margin-bottom: 0.125rem;
+  color: var(--gray-500);
+  transition: color var(--transition);
 }
 
 .nav-label {
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   font-weight: 500;
-  color: #666;
-  transition: color 0.2s ease;
+  color: var(--gray-500);
+  transition: color var(--transition);
 }
 
 .nav-item.active .nav-label {
-  color: #485fc7;
+  color: var(--primary);
+  font-weight: 600;
 }
 
 /* Adjust FAB container to avoid overlap with mobile nav */
@@ -545,19 +654,21 @@
   align-items: center;
   justify-content: space-between;
   padding: 0.75rem;
-  margin-bottom: 0.5rem;
-  background: #f8f9fa;
-  border-radius: 6px;
-  border: 1px solid #e9ecef;
+  margin-bottom: 0.375rem;
+  background: white;
+  border-radius: var(--radius);
+  border: 1px solid var(--gray-100);
+  transition: border-color var(--transition), box-shadow var(--transition);
 }
 
 .category-item:hover {
-  background: #e9ecef;
+  border-color: var(--gray-200);
+  box-shadow: var(--shadow-sm);
 }
 
 .category-name {
   font-weight: 500;
-  color: #333;
+  color: var(--gray-900);
 }
 
 .category-actions {
@@ -618,11 +729,16 @@
 }
 
 .fast-task-bar .input {
-  border-radius: 6px 0 0 6px;
+  border-radius: var(--radius) 0 0 var(--radius);
+  border-right: none;
+}
+
+.fast-task-bar .input:focus {
+  border-right: none;
 }
 
 .fast-task-bar .button {
-  border-radius: 0 6px 6px 0;
+  border-radius: 0 var(--radius) var(--radius) 0;
 }
 
 /* Fixed bottom buttons for task form */
@@ -633,7 +749,8 @@
   right: 0;
   background: white;
   padding: 1rem;
-  border-top: 1px solid #dbdbdb;
+  border-top: 1px solid var(--gray-100);
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.04);
   z-index: 999;
   margin: 0;
 }

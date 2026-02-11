@@ -1,18 +1,22 @@
 # One Life One List
 
-A comprehensive task management application with categories, tags, and periodic task lists. Features both frontend and backend with persistent data storage.
+A comprehensive task management PWA with categories, tags, and periodic task lists. Offline-first architecture with IndexedDB and background sync.
 
 ## Features
 
 - **Task Management**: Create, update, and delete tasks with descriptions and subtasks
+- **Fast-Task Input**: Quick-add bar at the bottom of the task list — type and press Enter to create tasks with active filters
 - **Categories**: Organize tasks by categories with color coding
 - **Tags**: Apply multiple tags to tasks for better organization
-- **Periodic Lists**: Separate daily, weekly, and monthly task lists
+- **Periodic Lists**: Separate daily, weekly, and monthly task lists with auto-reset
 - **Filtering**: Filter tasks by category and tags
 - **Completed Tasks**: Automatic separation of completed tasks
-- **Data Persistence**: Server-side storage with automatic backups
-- **Responsive Design**: Works on desktop and mobile devices
-- **Real-time Sync**: Synchronization between client and server
+- **Authentication**: Optional token-based auth via `AUTH_TOKEN` environment variable
+- **Offline-First**: IndexedDB storage with sync queue for offline operation
+- **Data Persistence**: Server-side JSON file storage with automatic backups
+- **Responsive Design**: Desktop and mobile PWA with bottom navigation
+- **Real-time Sync**: Bidirectional synchronization between client and server
+- **SPA Deep-Linking**: Client-side routing with full deep-link support (no 404s on refresh)
 - **Docker Support**: Full containerization for easy deployment
 
 ## Instructions
@@ -199,12 +203,27 @@ Create `.env` file for production:
 ```bash
 FLASK_ENV=production
 FLASK_APP=app.py
+AUTH_TOKEN=your-secret-token-here
 ```
 
+#### Authentication
+Set the `AUTH_TOKEN` environment variable to enable token-based authentication:
+```bash
+# Docker
+AUTH_TOKEN=mysecrettoken docker-compose up --build
+
+# Local
+export AUTH_TOKEN=mysecrettoken
+python app.py
+```
+When set, all `/api/` endpoints (except `/api/health` and `/api/auth/verify`) require a `Authorization: Bearer <token>` header. The frontend shows a login screen to collect the token.
+
+When `AUTH_TOKEN` is not set, authentication is disabled.
+
 #### Security Considerations
+- Set `AUTH_TOKEN` in production to protect your data
 - Change default ports if needed
 - Add reverse proxy for SSL termination
-- Implement authentication if required
 - Regular backups of Docker volumes
 
 #### Scaling
@@ -278,21 +297,27 @@ python -m http.server 8000
 - `GET /api/sync` - Pull data changes
 - `POST /api/sync` - Push batch updates
 
+### Authentication
+- `POST /api/auth/verify` - Verify a token (public endpoint)
+
 ### Health
-- `GET /api/health` - Health check
+- `GET /api/health` - Health check (public endpoint)
 
 ## Data Storage
 
 - **Backend**: JSON files in `data/users/default/` directory
 - **Automatic Backups**: Created before any write operation
-- **Frontend**: LocalStorage for offline capability
-- **Sync**: Bidirectional sync between client and server
+- **Frontend**: IndexedDB for offline-first storage with sync queue
+- **Sync**: Bidirectional sync between client and server with conflict resolution
 
 ## Architecture
 
 - **Backend**: Flask REST API with JSON file storage
-- **Frontend**: Vanilla JavaScript SPA with Bulma CSS
-- **Database**: JSON files with metadata and versioning
+- **Frontend**: Vanilla JavaScript PWA with Bulma CSS
+- **Storage**: IndexedDB (client) + JSON files (server)
+- **Auth**: Optional Bearer token via `AUTH_TOKEN` env var
+- **Routing**: Client-side SPA router with deep-link support
+- **Service Worker**: SPA-aware fetch handler, background sync, offline caching
 - **CORS**: Enabled for cross-origin requests
 - **Docker**: Multi-container setup with Nginx and Python
 

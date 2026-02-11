@@ -17,7 +17,7 @@ Create a task management application (Task App) that works as a Progressive Web 
 - **Storage**: JSON file system
 - **API**: REST endpoints for CRUD operations
 - **No database**: JSON files only
-- **Authentication**: Option 1 - No users (default user)
+- **Authentication**: Optional Bearer token via `AUTH_TOKEN` env var
 
 ## Functional Requirements
 
@@ -41,23 +41,30 @@ Create a task management application (Task App) that works as a Progressive Web 
     - If last in filtered list, use order of task above
   - [ ] Reordering works correctly even when list is filtered
 
+### Fast-Task Input
+- [x] Quick-add input bar at bottom of task list
+- [x] Enter key or '+' button creates task instantly
+- [x] Inherits active category/tag filters
+- [x] Clears and re-focuses input after creation
+- [x] "New Task" button opens full modal only if fast-input is empty
+
 ### Mobile Icon Navigation
-- [ ] Mobile-style icon navigation with 4 main sections
-- [ ] Icon 1: Lista Principal (main task list)
-- [ ] Icon 2: Acciones Diarias (daily recurring tasks)
-- [ ] Icon 3: Acciones Semanales (weekly recurring tasks)  
-- [ ] Icon 4: Acciones Mensuales (monthly recurring tasks)
-- [ ] Visual icon-based navigation suitable for mobile devices
-- [ ] Each section maintains its own separate task list
+- [x] Mobile-style icon navigation with 4 main sections
+- [x] Icon 1: Lista Principal (main task list)
+- [x] Icon 2: Acciones Diarias (daily recurring tasks)
+- [x] Icon 3: Acciones Semanales (weekly recurring tasks)  
+- [x] Icon 4: Acciones Mensuales (monthly recurring tasks)
+- [x] Visual icon-based navigation suitable for mobile devices
+- [x] Each section maintains its own separate task list
 
 ### Periodic Task Lists
-- [ ] Daily tasks list that resets automatically each day at 00:00
-- [ ] Weekly tasks list that resets automatically every Monday at 00:00
-- [ ] Monthly tasks list that resets automatically on the 1st of each month at 00:00
-- [ ] Tasks in periodic lists are separate from main list
-- [ ] Each periodic list has its own categories, tags, and subtasks
-- [ ] Completed periodic tasks remain completed until reset
-- [ ] Reset functionality clears completion status but keeps tasks
+- [x] Daily tasks list that resets automatically each day at 00:00
+- [x] Weekly tasks list that resets automatically every Monday at 00:00
+- [x] Monthly tasks list that resets automatically on the 1st of each month at 00:00
+- [x] Tasks in periodic lists are separate from main list
+- [x] Each periodic list has its own categories, tags, and subtasks
+- [x] Completed periodic tasks remain completed until reset
+- [x] Reset functionality clears completion status but keeps tasks
 
 ### Categories and Tags
 - [x] Create categories dynamically
@@ -73,11 +80,27 @@ Create a task management application (Task App) that works as a Progressive Web 
 - [x] Visual integration with existing category buttons
 
 ### Multi-device Synchronization
-- [ ] Automatic sync when connection available
-- [ ] Offline-first with pending operations queue
-- [ ] Background Sync with Service Worker
-- [ ] Conflict resolution (last-write-wins)
-- [ ] Access from mobile and Mac with same data
+- [x] Automatic sync when connection available
+- [x] Offline-first with pending operations queue
+- [x] Background Sync with Service Worker
+- [x] Conflict resolution (last-write-wins)
+- [x] Access from mobile and Mac with same data
+
+### Authentication
+- [x] Optional `AUTH_TOKEN` environment variable
+- [x] `before_request` middleware protects all `/api/` routes
+- [x] Public endpoints: `/api/health`, `/api/auth/verify`
+- [x] Frontend login overlay with token input
+- [x] Token stored in `localStorage`, sent as `Bearer` header
+- [x] 401 responses trigger login screen
+- [x] Disabled when `AUTH_TOKEN` is not set
+
+### SPA Routing
+- [x] Client-side router with dynamic params (`/edit/:id`)
+- [x] Deep-linking support (no 404 on direct URL access)
+- [x] Service Worker serves `index.html` for all navigation requests
+- [x] Backend catch-all serves `index.html` for non-static paths
+- [x] Nginx `try_files` in Docker frontend
 
 ## Technical Requirements
 
@@ -108,12 +131,18 @@ backend/
 - `GET/POST /api/tasks` - List/create tasks
 - `PUT/DELETE /api/tasks/{id}` - Update/delete task
 - `GET/POST /api/categories` - Category management
+- `PUT/DELETE /api/categories/{id}` - Update/delete category
 - `GET/POST /api/tags` - Tag management
+- `PUT/DELETE /api/tags/{id}` - Update/delete tag
 - `GET /api/sync?since=timestamp` - Pull changes
 - `POST /api/sync` - Batch sync operations
-- `GET /api/health` - Health check
+- `GET /api/health` - Health check (public)
+- `POST /api/auth/verify` - Verify auth token (public)
 - `GET/POST /api/periodic-tasks/{type}` - Periodic tasks (daily/weekly/monthly)
+- `PUT/DELETE /api/periodic-tasks/{type}/{id}` - Update/delete periodic task
 - `POST /api/periodic-tasks/{type}/reset` - Reset periodic tasks
+- `GET/POST /api/periodic-categories/{type}` - Periodic categories
+- `GET/POST /api/periodic-tags/{type}` - Periodic tags
 
 #### JSON Data Structure
 ```json
@@ -139,13 +168,14 @@ backend/
 ### PWA Frontend
 ```
 frontend/
-├── index.html         # Main app
-├── app.js            # Updated UI logic
-├── db.js             # IndexedDB wrapper
-├── api.js            # API client + sync manager
-├── sw.js             # Service Worker
+├── index.html         # Main app (login overlay, task views, fast-task bar)
+├── app.js            # UI logic, auth flow, router setup
+├── router.js         # Client-side SPA router with dynamic params
+├── db.js             # IndexedDB wrapper (all stores)
+├── api.js            # TaskAPI client + SyncManager + auth
+├── sw.js             # Service Worker (SPA-aware, background sync)
 ├── manifest.json     # PWA manifest
-└── styles.css        # Styles + sync indicators
+└── styles.css        # Bulma overrides, modern design tokens
 ```
 
 #### IndexedDB Schema
@@ -166,7 +196,8 @@ frontend/
 
 #### Service Worker Features
 - Cache static files (app shell)
-- Network-first for API requests
+- SPA-aware fetch: navigation requests always serve `index.html`
+- Network-first for API requests with cache fallback
 - Background sync registration
 - Offline fallbacks
 
@@ -194,15 +225,15 @@ frontend/
 ## UX/UI Requirements
 
 ### Sync Indicators
-- [ ] Visual sync status indicator (Offline/Syncing/Synced/Error)
-- [ ] Loading states during operations
+- [x] Visual sync status indicator (Offline/Syncing/Synced/Error)
+- [x] Loading states during operations
 - [ ] Conflict notifications if they occur
 
 ### PWA Features
-- [ ] Installable as native app
+- [x] Installable as native app
 - [ ] Icon and splash screen
-- [ ] Fullscreen mode
-- [ ] Responsive mobile/tablet/desktop design
+- [x] Fullscreen mode
+- [x] Responsive mobile/tablet/desktop design
 
 ## Multi-device Use Cases
 
@@ -273,7 +304,7 @@ frontend/
 4. Service Worker for offline
 
 ### Additional Features (Post-MVP)
-- [ ] Simple authentication
+- [x] Simple authentication (AUTH_TOKEN env var)
 - [ ] Push notifications
 - [ ] Data export/import
 - [ ] Advanced conflict resolution
@@ -281,16 +312,21 @@ frontend/
 
 ## Implementation Notes
 
-### Existing Code
-- **app.js**: 742 lines, complete functionality with localStorage
-- **index.html**: Bulma CSS structure, already responsive
-- **styles.css**: CSS variables, custom styles
+### Current Code State
+- **app.js**: ~2100 lines, full UI with IndexedDB, auth flow, fast-task, router
+- **api.js**: ~540 lines, TaskAPI with auth headers, SyncManager with conflict resolution
+- **db.js**: ~690 lines, IndexedDB wrapper for all stores including periodic lists
+- **router.js**: ~140 lines, client-side SPA router with dynamic params
+- **sw.js**: ~170 lines, SPA-aware service worker with background sync
+- **backend/app.py**: ~590 lines, DRY Flask API with centralized file maps and auth middleware
+- **index.html**: Bulma CSS structure with login overlay and fast-task bar
+- **styles.css**: Modern design tokens, card-style tasks, rounded pills
 
-### Migration Strategy
-1. **Backend**: Create from scratch with Flask
-2. **Frontend**: Migrate localStorage → IndexedDB gradually
-3. **Sync**: Add sync layer without breaking changes
-4. **PWA**: Service Worker and manifest at the end
+### Migration Status
+1. **Backend**: Complete - Flask with JSON file storage, auth middleware
+2. **Frontend**: Complete - IndexedDB, SyncManager, auth, fast-task UI
+3. **Sync**: Complete - Bidirectional sync with conflict resolution
+4. **PWA**: Complete - SPA-aware Service Worker, manifest, offline-first
 
 ### Dependencies
 ```python
@@ -307,10 +343,10 @@ Flask-CORS==4.0.0
 ## Success Metrics
 
 ### Functional
-- [ ] App works completely offline
-- [ ] Automatic sync works
-- [ ] Multi-device synchronized
-- [ ] PWA installs correctly
+- [x] App works completely offline
+- [x] Automatic sync works
+- [x] Multi-device synchronized
+- [x] PWA installs correctly
 
 ### Technical
 - [ ] <2s initial load time

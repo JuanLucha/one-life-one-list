@@ -1,0 +1,9 @@
+# ~/.ssh/config - Configuración SSH para tu servidor
+
+Host mi-servidor
+    HostName servidor.com
+    User usuario
+    Port 2222
+    IdentityFile ~/.ssh/id_rsa
+    ServerAliveInterval 60
+    ServerAliveCountMax 3

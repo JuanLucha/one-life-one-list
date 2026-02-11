@@ -53,8 +53,6 @@ class Router {
    */
   handleRoute() {
     const path = window.location.pathname;
-    console.log('Router: handling route:', path);
-
     // Find matching route
     let handler = null;
     let params = {};
@@ -78,7 +76,6 @@ class Router {
       this.currentRoute = path;
       handler(params);
     } else {
-      console.warn('Router: No handler found for route:', path);
       // Default to home route
       if (this.routes.has('/')) {
         this.routes.get('/')({});

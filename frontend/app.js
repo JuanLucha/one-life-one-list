@@ -54,7 +54,6 @@ async function initializeApp() {
     state.isLoading = false;
     updateSyncStatus('synced');
 
-    console.log('App initialized successfully');
   } catch (error) {
     console.error('Failed to initialize app:', error);
     state.isLoading = false;
@@ -291,21 +290,18 @@ async function checkAndResetPeriodicTasks() {
 
   // Check daily reset (every day at 00:00)
   if (lastReset.daily !== today) {
-    console.log('Resetting daily tasks');
     await resetPeriodicTasks('daily');
     await updateLastResetTime('daily', today);
   }
 
   // Check weekly reset (every Monday at 00:00)
   if (isMonday && lastReset.weekly !== today) {
-    console.log('Resetting weekly tasks');
     await resetPeriodicTasks('weekly');
     await updateLastResetTime('weekly', today);
   }
 
   // Check monthly reset (every 1st at 00:00)
   if (isFirstOfMonth && lastReset.monthly !== today) {
-    console.log('Resetting monthly tasks');
     await resetPeriodicTasks('monthly');
     await updateLastResetTime('monthly', today);
   }
@@ -781,62 +777,44 @@ const deleteTaskButton = document.getElementById('delete-task-button');
 function setupRouter() {
   if (setupRouter._initialized) return;
   if (window.router) {
-    console.log('Router available, setting up routes');
     setupRouter._initialized = true;
 
-    // Register routes
     window.router.register('/', () => {
-      console.log('Router: Home route');
       state.uiMode = 'list';
       state.editingTaskId = null;
       render();
     });
 
     window.router.register('/new', () => {
-      console.log('Router: New task route');
       openNew();
     });
 
     window.router.register('/edit/:id', (params) => {
-      console.log('Router: Edit task route with ID:', params.id);
-
-      // Ensure data is loaded before trying to edit
       if (state.tasks.length === 0) {
-        console.log('Router: No tasks loaded, loading data first...');
         loadState().then(() => {
-          console.log('Router: Data loaded, retrying edit...');
           const task = state.tasks.find(t => t.id === params.id);
           if (task) {
             openEdit(task.id);
           } else {
-            console.error('Router: Task still not found after loading:', params.id);
             window.router.navigate('/');
           }
-        }).catch(error => {
-          console.error('Router: Failed to load data:', error);
+        }).catch(() => {
           window.router.navigate('/');
         });
       } else {
         const task = state.tasks.find(t => t.id === params.id);
-        console.log('Router: Found task:', task);
         if (task) {
-          console.log('Router: Calling openEdit with task ID:', task.id);
           openEdit(task.id);
         } else {
-          console.error('Router: Task not found:', params.id);
           window.router.navigate('/');
         }
       }
     });
 
     window.router.register('/categories', () => {
-      console.log('Router: Categories route');
       openCategoriesView();
     });
-
-    console.log('Router setup completed');
   } else {
-    console.log('Router not available yet, retrying in 10ms');
     setTimeout(setupRouter, 10);
   }
 }
@@ -1028,7 +1006,6 @@ function renderFilters() {
   manageCategoriesButton.innerHTML = '<span class="icon"><i class="fas fa-edit"></i></span>';
   manageCategoriesButton.title = 'Manage Categories';
   manageCategoriesButton.addEventListener('click', () => {
-    console.log('Manage Categories button clicked!');
     if (window.router) {
       window.router.navigate('/categories');
     } else {
@@ -1223,56 +1200,28 @@ function renderTagPillsForEdit(selectedTagIds) {
 }
 
 function openEdit(taskId) {
-  console.log('openEdit called with ID:', taskId);
-  console.log('Available tasks:', state.tasks.map(t => ({ id: t.id, name: t.name })));
-
   const task = state.tasks.find(t => t.id === taskId);
-  console.log('Found task:', task);
-  if (!task) {
-    console.error('Task not found, returning');
-    return;
-  }
+  if (!task) return;
 
-  console.log('Setting uiMode to edit');
   state.uiMode = 'edit';
   state.editingTaskId = taskId;
 
-  // Don't update URL here - router already handled it
-  console.log('Router already handled URL, not updating again');
-
-  console.log('Populating form');
-  // Populate form
   newTaskNameInput.value = task.name;
   newTaskDescriptionInput.value = task.description;
   newCategoryId = task.categoryId;
   newTagIds = task.tagIds || [];
 
-  // Render form elements
   renderCategoryPillsForEdit(task.categoryId);
   renderTagPillsForEdit(task.tagIds);
-
-  console.log('Showing edit view');
-  // Show edit view
-  console.log('listView element:', listView);
-  console.log('newTaskView element:', newTaskView);
 
   listView.classList.add('is-hidden');
   newTaskView.classList.remove('is-hidden');
   deleteTaskButton.classList.remove('is-hidden');
 
-  console.log('Views updated - list hidden:', listView.classList.contains('is-hidden'));
-  console.log('Views updated - edit visible:', !newTaskView.classList.contains('is-hidden'));
-
-  // Subtasks
   renderSubtasksForEdit(task.subtasks);
-
-  deleteTaskButton.classList.remove('is-hidden');
   render();
-
-  console.log('openEdit completed');
 }
 function openNew() {
-  console.log('openNew called');
   state.uiMode = 'new';
   state.editingTaskId = null;
   if (deleteTaskButton) {
@@ -1302,86 +1251,46 @@ function openNew() {
 // -----------------------
 
 function openCategoriesView() {
-  console.log('openCategoriesView called');
   state.uiMode = 'categories';
-
-  // Hide list view and show categories view
   listView.classList.add('is-hidden');
   categoriesView.classList.remove('is-hidden');
-
-  // Render categories list
   renderCategoriesList();
 
-  // Add event listener to back button (ensure it's registered when button is visible)
   const backBtn = document.getElementById('back-to-list-from-categories');
-  console.log('Back button found:', backBtn);
-
   if (backBtn) {
-    // Clone the button to remove any existing event listeners
     const newBackBtn = backBtn.cloneNode(true);
     backBtn.parentNode.replaceChild(newBackBtn, backBtn);
-
-    console.log('New back button created:', newBackBtn);
     newBackBtn.addEventListener('click', (e) => {
-      console.log('Back to Tasks button clicked!', e);
       e.preventDefault();
       e.stopPropagation();
       closeCategoriesView();
     });
-
-    console.log('Event listener added to back button');
-  } else {
-    console.error('Back button not found!');
   }
 
-  // Add event listener to new category input (ensure it's registered when input is visible)
   const categoryInput = document.getElementById('new-category-input');
-  console.log('Category input found:', categoryInput);
-
   if (categoryInput) {
-    // Remove any existing event listeners by cloning
     const newInput = categoryInput.cloneNode(true);
     categoryInput.parentNode.replaceChild(newInput, categoryInput);
-
-    console.log('New category input created:', newInput);
     newInput.addEventListener('keydown', (e) => {
-      console.log('Key pressed on new category input:', e.key);
       if (e.key === 'Enter') {
-        console.log('Enter key detected, calling addCategory');
         e.preventDefault();
         addCategory();
       }
     });
-
-    console.log('Event listener added to category input');
-  } else {
-    console.error('Category input not found!');
   }
 
-  // Add event listener to add category button (ensure it's registered when button is visible)
   const addBtn = document.getElementById('add-category-button');
-  console.log('Add category button found:', addBtn);
-
   if (addBtn) {
-    // Remove any existing event listeners by cloning
     const newAddBtn = addBtn.cloneNode(true);
     addBtn.parentNode.replaceChild(newAddBtn, addBtn);
-
-    console.log('New add category button created:', newAddBtn);
     newAddBtn.addEventListener('click', (e) => {
-      console.log('Add category button clicked!', e);
       e.preventDefault();
       addCategory();
     });
-
-    console.log('Event listener added to add category button');
-  } else {
-    console.error('Add category button not found!');
   }
 }
 
 function closeCategoriesView() {
-  console.log('closeCategoriesView called');
   if (window.router) {
     window.router.navigate('/');
   } else {
@@ -1439,57 +1348,26 @@ function renderCategoriesList() {
 }
 
 async function addCategory() {
-  console.log('addCategory function called');
-  console.log('syncManager available:', !!syncManager);
-
-  // Get the current input element (in case it was cloned)
   const currentInput = document.getElementById('new-category-input');
-  console.log('Current input element:', currentInput);
-
-  // Add a small delay to ensure input value is updated
   await new Promise(resolve => setTimeout(resolve, 10));
 
   const name = currentInput.value.trim();
-  console.log('Category name from current input:', name);
-  console.log('Current input element value:', currentInput.value);
-
-  if (!name) {
-    console.log('Empty category name, returning');
-    return;
-  }
+  if (!name) return;
 
   try {
-    console.log('Creating new category object...');
     const newCategory = {
       id: generateId(),
       name: name,
-      color: '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0') // Random color with proper format
+      color: '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0')
     };
-    console.log('New category object:', newCategory);
 
-    console.log('Calling syncManager.createCategory...');
     await syncManager.createCategory(newCategory);
-    console.log('Category created successfully');
-
-    // Force sync to ensure changes are saved
     await syncManager.forceSync();
-    console.log('Force sync completed');
-
-    // Reload state from IndexedDB to get updated data
     await loadState();
-    console.log('State reloaded after creating category');
-
-    // Clear input using the current input element
     currentInput.value = '';
-    console.log('Input cleared');
-
-    // Re-render categories list
     renderCategoriesList();
-    console.log('Categories list re-rendered');
-
   } catch (error) {
     console.error('Failed to add category:', error);
-    alert('Failed to add category: ' + error.message);
   }
 }
 
@@ -1613,61 +1491,25 @@ function startEditCategory(categoryId) {
 }
 
 async function deleteCategory(categoryId) {
-  console.log('deleteCategory called with ID:', categoryId);
-
   if (!confirm('Are you sure you want to delete this category? Tasks in this category will become uncategorized.')) {
-    console.log('User cancelled category deletion');
     return;
   }
 
   try {
-    console.log('Finding tasks with category:', categoryId);
-    // Find all tasks that have this category
     const tasksToUpdate = state.tasks.filter(task => task.categoryId === categoryId);
-    console.log('Tasks to update:', tasksToUpdate.length);
-
-    // Update all tasks to remove the category
     for (const task of tasksToUpdate) {
-      const updatedTask = { ...task, categoryId: null, updatedAt: Date.now() };
-      console.log('Updating task to remove category:', task.id);
-      await syncManager.updateTask(updatedTask);
+      await syncManager.updateTask({ ...task, categoryId: null, updatedAt: Date.now() });
     }
-    console.log('All tasks updated');
 
-    // Delete the category
-    console.log('Deleting category:', categoryId);
     await syncManager.deleteCategory(categoryId);
-    console.log('Category deleted successfully');
-
-    // Force sync to ensure changes are saved
     await syncManager.forceSync();
-    console.log('Force sync completed');
-
-    // Wait a bit for sync to complete
     await new Promise(resolve => setTimeout(resolve, 100));
-
-    // Reload state from IndexedDB to get updated data
     await loadState();
-    console.log('State reloaded after deleting category');
 
-    // Debug: Check if category was actually removed
-    const deletedCategory = state.categories.find(c => c.id === categoryId);
-    console.log('Deleted category still in state:', deletedCategory);
-    console.log('All categories after deletion:', state.categories.map(c => ({ id: c.id, name: c.name })));
-
-    // Re-render categories list
     renderCategoriesList();
-    console.log('Categories list re-rendered');
-
-    // If we're in the list view, re-render to show updated tasks
-    if (state.uiMode === 'list') {
-      render();
-      console.log('Task list re-rendered');
-    }
-
+    if (state.uiMode === 'list') render();
   } catch (error) {
     console.error('Failed to delete category:', error);
-    alert('Failed to delete category: ' + error.message);
   }
 }
 
@@ -1793,21 +1635,14 @@ function createSubtaskElement(subtask) {
 // -----------------------
 
 document.addEventListener('DOMContentLoaded', async () => {
-  console.log('DOM Content Loaded - Initializing app');
-
-  // Initialize sync manager first
   try {
-    console.log('Initializing sync manager...');
     const { initSync } = await import('./api.js');
     syncManager = await initSync();
-    console.log('Sync manager initialized:', !!syncManager);
   } catch (error) {
     console.error('Failed to initialize sync manager:', error);
   }
 
-  // Load initial data
   await loadState();
-  console.log('Initial state loaded. Tasks:', state.tasks.length, 'Categories:', state.categories.length);
 
   // Render initial view
   render();
@@ -1820,22 +1655,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Register service worker
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js')
-      .then((registration) => {
-        console.log('Service Worker registered:', registration);
-
-        // Listen for messages from service worker
+      .then(() => {
         navigator.serviceWorker.addEventListener('message', (event) => {
           if (event.data && event.data.type === 'SYNC_TRIGGERED') {
-            console.log('Received sync trigger from service worker');
-            if (syncManager) {
-              syncManager.sync();
-            }
+            if (syncManager) syncManager.sync();
           }
         });
       })
-      .catch((error) => {
-        console.log('Service Worker registration failed:', error);
-      });
+      .catch(() => { });
   }
 
   newTaskButton.addEventListener('click', () => {
@@ -1844,14 +1671,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   cancelButton.addEventListener('click', () => {
     if (window.router) window.router.navigate('/');
   });
-
-  // Categories management (button is created dynamically in renderFilters)
-  console.log('addCategoryButton element:', addCategoryButton);
-  if (addCategoryButton) {
-    console.log('addCategoryButton found but event listener will be added in openCategoriesView');
-  } else {
-    console.log('addCategoryButton not found (will be registered in openCategoriesView)');
-  }
 
   // Sync button
   syncButton.addEventListener('click', async () => {

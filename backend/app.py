@@ -73,6 +73,38 @@ def generate_id():
     """Generate unique ID"""
     return str(uuid.uuid4())
 
+VALID_PERIODIC_TYPES = ('daily', 'weekly', 'monthly')
+
+TASKS_FILES = {
+    'main': TASKS_FILE,
+    'daily': DAILY_TASKS_FILE,
+    'weekly': WEEKLY_TASKS_FILE,
+    'monthly': MONTHLY_TASKS_FILE,
+}
+
+CATEGORIES_FILES = {
+    'main': CATEGORIES_FILE,
+    'daily': DAILY_CATEGORIES_FILE,
+    'weekly': WEEKLY_CATEGORIES_FILE,
+    'monthly': MONTHLY_CATEGORIES_FILE,
+}
+
+TAGS_FILES = {
+    'main': TAGS_FILE,
+    'daily': DAILY_TAGS_FILE,
+    'weekly': WEEKLY_TAGS_FILE,
+    'monthly': MONTHLY_TAGS_FILE,
+}
+
+def get_file_for(entity, list_type):
+    """Resolve the JSON file path for a given entity and list type."""
+    maps = {'task': TASKS_FILES, 'category': CATEGORIES_FILES, 'tag': TAGS_FILES}
+    return maps.get(entity, {}).get(list_type)
+
+def now_ms():
+    """Current time in milliseconds."""
+    return int(datetime.now().timestamp() * 1000)
+
 # Routes
 @app.route('/api/health', methods=['GET'])
 def health_check():
@@ -87,7 +119,7 @@ def get_tasks():
 def create_task():
     task_data = request.json
     task_data['id'] = generate_id()
-    task_data['created_at'] = int(datetime.now().timestamp() * 1000)
+    task_data['created_at'] = now_ms()
     task_data['updated_at'] = task_data['created_at']
     
     file_data = read_json_file(TASKS_FILE)
@@ -110,7 +142,7 @@ def update_task(task_id):
     
     updated_task = request.json
     updated_task['id'] = task_id
-    updated_task['updated_at'] = int(datetime.now().timestamp() * 1000)
+    updated_task['updated_at'] = now_ms()
     
     # Preserve created_at if not provided
     if 'created_at' not in updated_task:
@@ -251,222 +283,119 @@ def delete_tag(tag_id):
 # Periodic Tasks Routes
 @app.route('/api/periodic-tasks/<task_type>', methods=['GET'])
 def get_periodic_tasks(task_type):
-    """Get tasks for a specific periodic list (daily, weekly, monthly)"""
-    if task_type not in ['daily', 'weekly', 'monthly']:
+    if task_type not in VALID_PERIODIC_TYPES:
         return jsonify({"error": "Invalid task type"}), 400
-    
-    file_map = {
-        'daily': DAILY_TASKS_FILE,
-        'weekly': WEEKLY_TASKS_FILE,
-        'monthly': MONTHLY_TASKS_FILE
-    }
-    
-    file_data = read_json_file(file_map[task_type])
+    file_data = read_json_file(TASKS_FILES[task_type])
     return jsonify(file_data['data'])
 
 @app.route('/api/periodic-tasks/<task_type>', methods=['POST'])
 def create_periodic_task(task_type):
-    """Create a new task in a specific periodic list"""
-    if task_type not in ['daily', 'weekly', 'monthly']:
+    if task_type not in VALID_PERIODIC_TYPES:
         return jsonify({"error": "Invalid task type"}), 400
-    
-    file_map = {
-        'daily': DAILY_TASKS_FILE,
-        'weekly': WEEKLY_TASKS_FILE,
-        'monthly': MONTHLY_TASKS_FILE
-    }
-    
     task_data = request.json
     task_data['id'] = generate_id()
-    task_data['created_at'] = int(datetime.now().timestamp() * 1000)
+    task_data['created_at'] = now_ms()
     task_data['updated_at'] = task_data['created_at']
-    
-    file_data = read_json_file(file_map[task_type])
+    file_data = read_json_file(TASKS_FILES[task_type])
     file_data['data'].append(task_data)
-    
-    if write_json_file(file_map[task_type], file_data['data']):
+    if write_json_file(TASKS_FILES[task_type], file_data['data']):
         return jsonify(task_data), 201
-    else:
-        return jsonify({"error": "Failed to save task"}), 500
+    return jsonify({"error": "Failed to save task"}), 500
 
 @app.route('/api/periodic-tasks/<task_type>/<task_id>', methods=['PUT'])
 def update_periodic_task(task_type, task_id):
-    """Update a task in a specific periodic list"""
-    if task_type not in ['daily', 'weekly', 'monthly']:
+    if task_type not in VALID_PERIODIC_TYPES:
         return jsonify({"error": "Invalid task type"}), 400
-    
-    file_map = {
-        'daily': DAILY_TASKS_FILE,
-        'weekly': WEEKLY_TASKS_FILE,
-        'monthly': MONTHLY_TASKS_FILE
-    }
-    
-    file_data = read_json_file(file_map[task_type])
+    file_data = read_json_file(TASKS_FILES[task_type])
     tasks = file_data['data']
-    
-    task_index = next((i for i, task in enumerate(tasks) if task['id'] == task_id), None)
-    
+    task_index = next((i for i, t in enumerate(tasks) if t['id'] == task_id), None)
     if task_index is None:
         return jsonify({"error": "Task not found"}), 404
-    
     updated_task = request.json
     updated_task['id'] = task_id
-    updated_task['updated_at'] = int(datetime.now().timestamp() * 1000)
-    
-    # Preserve created_at if not provided
+    updated_task['updated_at'] = now_ms()
     if 'created_at' not in updated_task:
         updated_task['created_at'] = tasks[task_index]['created_at']
-    
     tasks[task_index] = updated_task
-    
-    if write_json_file(file_map[task_type], tasks):
+    if write_json_file(TASKS_FILES[task_type], tasks):
         return jsonify(updated_task)
-    else:
-        return jsonify({"error": "Failed to update task"}), 500
+    return jsonify({"error": "Failed to update task"}), 500
 
 @app.route('/api/periodic-tasks/<task_type>/<task_id>', methods=['DELETE'])
 def delete_periodic_task(task_type, task_id):
-    """Delete a task from a specific periodic list"""
-    if task_type not in ['daily', 'weekly', 'monthly']:
+    if task_type not in VALID_PERIODIC_TYPES:
         return jsonify({"error": "Invalid task type"}), 400
-    
-    file_map = {
-        'daily': DAILY_TASKS_FILE,
-        'weekly': WEEKLY_TASKS_FILE,
-        'monthly': MONTHLY_TASKS_FILE
-    }
-    
-    file_data = read_json_file(file_map[task_type])
+    file_data = read_json_file(TASKS_FILES[task_type])
     tasks = file_data['data']
-    
-    task_index = next((i for i, task in enumerate(tasks) if task['id'] == task_id), None)
-    
+    task_index = next((i for i, t in enumerate(tasks) if t['id'] == task_id), None)
     if task_index is None:
         return jsonify({"error": "Task not found"}), 404
-    
     deleted_task = tasks.pop(task_index)
-    
-    if write_json_file(file_map[task_type], tasks):
+    if write_json_file(TASKS_FILES[task_type], tasks):
         return jsonify(deleted_task)
-    else:
-        return jsonify({"error": "Failed to delete task"}), 500
+    return jsonify({"error": "Failed to delete task"}), 500
 
 @app.route('/api/periodic-tasks/<task_type>/reset', methods=['POST'])
 def reset_periodic_tasks(task_type):
-    """Reset completion status of all tasks in a periodic list"""
-    if task_type not in ['daily', 'weekly', 'monthly']:
+    if task_type not in VALID_PERIODIC_TYPES:
         return jsonify({"error": "Invalid task type"}), 400
-    
-    file_map = {
-        'daily': DAILY_TASKS_FILE,
-        'weekly': WEEKLY_TASKS_FILE,
-        'monthly': MONTHLY_TASKS_FILE
-    }
-    
-    file_data = read_json_file(file_map[task_type])
+    file_data = read_json_file(TASKS_FILES[task_type])
     tasks = file_data['data']
-    
-    now = int(datetime.now().timestamp() * 1000)
+    ts = now_ms()
     has_changes = False
-    
     for task in tasks:
         if task.get('done', False):
             task['done'] = False
-            task['updated_at'] = now
-            # Reset subtasks too
-            if 'subtasks' in task:
-                for subtask in task['subtasks']:
-                    if subtask.get('done', False):
-                        subtask['done'] = False
+            task['updated_at'] = ts
+            for subtask in task.get('subtasks', []):
+                subtask['done'] = False
             has_changes = True
-    
     if has_changes:
-        if write_json_file(file_map[task_type], tasks):
-            # Update last reset time
+        if write_json_file(TASKS_FILES[task_type], tasks):
             update_last_reset_time(task_type)
             return jsonify({"message": f"Reset {task_type} tasks", "reset_count": len(tasks)})
-        else:
-            return jsonify({"error": "Failed to reset tasks"}), 500
-    else:
-        return jsonify({"message": "No tasks needed reset", "reset_count": 0})
+        return jsonify({"error": "Failed to reset tasks"}), 500
+    return jsonify({"message": "No tasks needed reset", "reset_count": 0})
 
 # Periodic Categories Routes
 @app.route('/api/periodic-categories/<task_type>', methods=['GET'])
 def get_periodic_categories(task_type):
-    """Get categories for a specific periodic list"""
-    if task_type not in ['daily', 'weekly', 'monthly']:
+    if task_type not in VALID_PERIODIC_TYPES:
         return jsonify({"error": "Invalid task type"}), 400
-    
-    file_map = {
-        'daily': DAILY_CATEGORIES_FILE,
-        'weekly': WEEKLY_CATEGORIES_FILE,
-        'monthly': MONTHLY_CATEGORIES_FILE
-    }
-    
-    file_data = read_json_file(file_map[task_type])
+    file_data = read_json_file(CATEGORIES_FILES[task_type])
     return jsonify(file_data['data'])
 
 @app.route('/api/periodic-categories/<task_type>', methods=['POST'])
 def create_periodic_category(task_type):
-    """Create a new category in a specific periodic list"""
-    if task_type not in ['daily', 'weekly', 'monthly']:
+    if task_type not in VALID_PERIODIC_TYPES:
         return jsonify({"error": "Invalid task type"}), 400
-    
-    file_map = {
-        'daily': DAILY_CATEGORIES_FILE,
-        'weekly': WEEKLY_CATEGORIES_FILE,
-        'monthly': MONTHLY_CATEGORIES_FILE
-    }
-    
     category_data = request.json
     category_data['id'] = generate_id()
-    
-    file_data = read_json_file(file_map[task_type])
+    file_data = read_json_file(CATEGORIES_FILES[task_type])
     file_data['data'].append(category_data)
-    
-    if write_json_file(file_map[task_type], file_data['data']):
+    if write_json_file(CATEGORIES_FILES[task_type], file_data['data']):
         return jsonify(category_data), 201
-    else:
-        return jsonify({"error": "Failed to save category"}), 500
+    return jsonify({"error": "Failed to save category"}), 500
 
 # Periodic Tags Routes
 @app.route('/api/periodic-tags/<task_type>', methods=['GET'])
 def get_periodic_tags(task_type):
-    """Get tags for a specific periodic list"""
-    if task_type not in ['daily', 'weekly', 'monthly']:
+    if task_type not in VALID_PERIODIC_TYPES:
         return jsonify({"error": "Invalid task type"}), 400
-    
-    file_map = {
-        'daily': DAILY_TAGS_FILE,
-        'weekly': WEEKLY_TAGS_FILE,
-        'monthly': MONTHLY_TAGS_FILE
-    }
-    
-    file_data = read_json_file(file_map[task_type])
+    file_data = read_json_file(TAGS_FILES[task_type])
     return jsonify(file_data['data'])
 
 @app.route('/api/periodic-tags/<task_type>', methods=['POST'])
 def create_periodic_tag(task_type):
-    """Create a new tag in a specific periodic list"""
-    if task_type not in ['daily', 'weekly', 'monthly']:
+    if task_type not in VALID_PERIODIC_TYPES:
         return jsonify({"error": "Invalid task type"}), 400
-    
-    file_map = {
-        'daily': DAILY_TAGS_FILE,
-        'weekly': WEEKLY_TAGS_FILE,
-        'monthly': MONTHLY_TAGS_FILE
-    }
-    
     tag_data = request.json
     tag_data['id'] = generate_id()
-    
-    file_data = read_json_file(file_map[task_type])
+    file_data = read_json_file(TAGS_FILES[task_type])
     file_data['data'].append(tag_data)
-    
-    if write_json_file(file_map[task_type], file_data['data']):
+    if write_json_file(TAGS_FILES[task_type], file_data['data']):
         return jsonify(tag_data), 201
-    else:
-        return jsonify({"error": "Failed to save tag"}), 500
+    return jsonify({"error": "Failed to save tag"}), 500
 
 def update_last_reset_time(task_type):
     """Update the last reset time for a periodic list"""
@@ -501,11 +430,50 @@ def sync_pull():
     
     return jsonify(result)
 
+def _sync_operation(filepath, op_type, entity, data, results, conflicts):
+    """Process a single sync operation on a JSON data file."""
+    item_id = data.get('id')
+    file_data = read_json_file(filepath)
+    items = file_data['data']
+
+    if op_type == 'CREATE':
+        if any(item['id'] == item_id for item in items):
+            conflicts.append({'type': 'CREATE_CONFLICT', 'entity': entity, 'id': item_id})
+        else:
+            if entity == 'task':
+                data['created_at'] = now_ms()
+                data['updated_at'] = data['created_at']
+            items.append(data)
+            status = 'CREATE_SUCCESS' if write_json_file(filepath, items) else 'CREATE_FAILED'
+            results.append({'type': status, 'entity': entity, 'id': item_id})
+
+    elif op_type == 'UPDATE':
+        idx = next((i for i, item in enumerate(items) if item['id'] == item_id), None)
+        if idx is None:
+            results.append({'type': 'UPDATE_NOT_FOUND', 'entity': entity, 'id': item_id})
+        elif entity == 'task' and items[idx].get('updated_at', 0) > data.get('updated_at', 0):
+            conflicts.append({'type': 'UPDATE_CONFLICT', 'entity': entity, 'id': item_id,
+                            'server_data': items[idx], 'client_data': data})
+        else:
+            if entity == 'task':
+                data['updated_at'] = now_ms()
+            items[idx] = data
+            status = 'UPDATE_SUCCESS' if write_json_file(filepath, items) else 'UPDATE_FAILED'
+            results.append({'type': status, 'entity': entity, 'id': item_id})
+
+    elif op_type == 'DELETE':
+        idx = next((i for i, item in enumerate(items) if item['id'] == item_id), None)
+        if idx is None:
+            results.append({'type': 'DELETE_NOT_FOUND', 'entity': entity, 'id': item_id})
+        else:
+            items.pop(idx)
+            status = 'DELETE_SUCCESS' if write_json_file(filepath, items) else 'DELETE_FAILED'
+            results.append({'type': status, 'entity': entity, 'id': item_id})
+
 @app.route('/api/sync', methods=['POST'])
 def sync_push():
     """Receive batch updates from client"""
     operations = request.json.get('operations', [])
-    client_version = request.json.get('client_version', 0)
     
     results = []
     conflicts = []
@@ -517,194 +485,12 @@ def sync_push():
         list_type = operation.get('listType', 'main')
         
         try:
-            if entity == 'task':
-                # Determine which file to use based on list_type
-                if list_type == 'main':
-                    tasks_file = TASKS_FILE
-                elif list_type == 'daily':
-                    tasks_file = DAILY_TASKS_FILE
-                elif list_type == 'weekly':
-                    tasks_file = WEEKLY_TASKS_FILE
-                elif list_type == 'monthly':
-                    tasks_file = MONTHLY_TASKS_FILE
-                else:
-                    results.append({'type': 'ERROR', 'entity': 'task', 'error': f'Invalid list_type: {list_type}'})
-                    continue
-                
-                if op_type == 'CREATE':
-                    # Check if task already exists
-                    file_data = read_json_file(tasks_file)
-                    existing = next((t for t in file_data['data'] if t['id'] == data['id']), None)
-                    if existing:
-                        conflicts.append({'type': 'CREATE_CONFLICT', 'entity': 'task', 'id': data['id']})
-                    else:
-                        # Create new task
-                        data['created_at'] = int(datetime.now().timestamp() * 1000)
-                        data['updated_at'] = data['created_at']
-                        file_data['data'].append(data)
-                        if write_json_file(tasks_file, file_data['data']):
-                            results.append({'type': 'CREATE_SUCCESS', 'entity': 'task', 'id': data['id']})
-                        else:
-                            results.append({'type': 'CREATE_FAILED', 'entity': 'task', 'id': data['id']})
-                
-                elif op_type == 'UPDATE':
-                    # Update existing task
-                    file_data = read_json_file(tasks_file)
-                    tasks = file_data['data']
-                    task_index = next((i for i, t in enumerate(tasks) if t['id'] == data['id']), None)
-                    
-                    if task_index is not None:
-                        # Check for conflicts (server version newer than client)
-                        server_updated = tasks[task_index].get('updated_at', 0)
-                        client_updated = data.get('updated_at', 0)
-                        
-                        if server_updated > client_updated:
-                            conflicts.append({'type': 'UPDATE_CONFLICT', 'entity': 'task', 'id': data['id'], 
-                                            'server_data': tasks[task_index], 'client_data': data})
-                        else:
-                            # Apply update
-                            data['updated_at'] = int(datetime.now().timestamp() * 1000)
-                            tasks[task_index] = data
-                            if write_json_file(tasks_file, tasks):
-                                results.append({'type': 'UPDATE_SUCCESS', 'entity': 'task', 'id': data['id']})
-                            else:
-                                results.append({'type': 'UPDATE_FAILED', 'entity': 'task', 'id': data['id']})
-                    else:
-                        results.append({'type': 'UPDATE_NOT_FOUND', 'entity': 'task', 'id': data['id']})
-                
-                elif op_type == 'DELETE':
-                    # Delete task
-                    file_data = read_json_file(tasks_file)
-                    tasks = file_data['data']
-                    task_index = next((i for i, t in enumerate(tasks) if t['id'] == data['id']), None)
-                    
-                    if task_index is not None:
-                        tasks.pop(task_index)
-                        if write_json_file(tasks_file, tasks):
-                            results.append({'type': 'DELETE_SUCCESS', 'entity': 'task', 'id': data['id']})
-                        else:
-                            results.append({'type': 'DELETE_FAILED', 'entity': 'task', 'id': data['id']})
-                    else:
-                        results.append({'type': 'DELETE_NOT_FOUND', 'entity': 'task', 'id': data['id']})
-            
-            elif entity == 'category':
-                # Determine which file to use based on list_type
-                if list_type == 'main':
-                    categories_file = CATEGORIES_FILE
-                elif list_type == 'daily':
-                    categories_file = DAILY_CATEGORIES_FILE
-                elif list_type == 'weekly':
-                    categories_file = WEEKLY_CATEGORIES_FILE
-                elif list_type == 'monthly':
-                    categories_file = MONTHLY_CATEGORIES_FILE
-                else:
-                    results.append({'type': 'ERROR', 'entity': 'category', 'error': f'Invalid list_type: {list_type}'})
-                    continue
-                
-                if op_type == 'CREATE':
-                    # Check if category already exists
-                    file_data = read_json_file(categories_file)
-                    existing = next((c for c in file_data['data'] if c['id'] == data['id']), None)
-                    if existing:
-                        conflicts.append({'type': 'CREATE_CONFLICT', 'entity': 'category', 'id': data['id']})
-                    else:
-                        # Create new category
-                        file_data['data'].append(data)
-                        if write_json_file(categories_file, file_data['data']):
-                            results.append({'type': 'CREATE_SUCCESS', 'entity': 'category', 'id': data['id']})
-                        else:
-                            results.append({'type': 'CREATE_FAILED', 'entity': 'category', 'id': data['id']})
-                
-                elif op_type == 'UPDATE':
-                    # Update existing category
-                    file_data = read_json_file(categories_file)
-                    categories = file_data['data']
-                    category_index = next((i for i, c in enumerate(categories) if c['id'] == data['id']), None)
-                    
-                    if category_index is not None:
-                        # Apply update
-                        categories[category_index] = data
-                        if write_json_file(categories_file, categories):
-                            results.append({'type': 'UPDATE_SUCCESS', 'entity': 'category', 'id': data['id']})
-                        else:
-                            results.append({'type': 'UPDATE_FAILED', 'entity': 'category', 'id': data['id']})
-                    else:
-                        results.append({'type': 'UPDATE_NOT_FOUND', 'entity': 'category', 'id': data['id']})
-                
-                elif op_type == 'DELETE':
-                    # Delete category
-                    file_data = read_json_file(categories_file)
-                    categories = file_data['data']
-                    category_index = next((i for i, c in enumerate(categories) if c['id'] == data['id']), None)
-                    
-                    if category_index is not None:
-                        categories.pop(category_index)
-                        if write_json_file(categories_file, categories):
-                            results.append({'type': 'DELETE_SUCCESS', 'entity': 'category', 'id': data['id']})
-                        else:
-                            results.append({'type': 'DELETE_FAILED', 'entity': 'category', 'id': data['id']})
-                    else:
-                        results.append({'type': 'DELETE_NOT_FOUND', 'entity': 'category', 'id': data['id']})
-            
-            elif entity == 'tag':
-                # Determine which file to use based on list_type
-                if list_type == 'main':
-                    tags_file = TAGS_FILE
-                elif list_type == 'daily':
-                    tags_file = DAILY_TAGS_FILE
-                elif list_type == 'weekly':
-                    tags_file = WEEKLY_TAGS_FILE
-                elif list_type == 'monthly':
-                    tags_file = MONTHLY_TAGS_FILE
-                else:
-                    results.append({'type': 'ERROR', 'entity': 'tag', 'error': f'Invalid list_type: {list_type}'})
-                    continue
-                
-                if op_type == 'CREATE':
-                    # Check if tag already exists
-                    file_data = read_json_file(tags_file)
-                    existing = next((t for t in file_data['data'] if t['id'] == data['id']), None)
-                    if existing:
-                        conflicts.append({'type': 'CREATE_CONFLICT', 'entity': 'tag', 'id': data['id']})
-                    else:
-                        # Create new tag
-                        file_data['data'].append(data)
-                        if write_json_file(tags_file, file_data['data']):
-                            results.append({'type': 'CREATE_SUCCESS', 'entity': 'tag', 'id': data['id']})
-                        else:
-                            results.append({'type': 'CREATE_FAILED', 'entity': 'tag', 'id': data['id']})
-                
-                elif op_type == 'UPDATE':
-                    # Update existing tag
-                    file_data = read_json_file(tags_file)
-                    tags = file_data['data']
-                    tag_index = next((i for i, t in enumerate(tags) if t['id'] == data['id']), None)
-                    
-                    if tag_index is not None:
-                        # Apply update
-                        tags[tag_index] = data
-                        if write_json_file(tags_file, tags):
-                            results.append({'type': 'UPDATE_SUCCESS', 'entity': 'tag', 'id': data['id']})
-                        else:
-                            results.append({'type': 'UPDATE_FAILED', 'entity': 'tag', 'id': data['id']})
-                    else:
-                        results.append({'type': 'UPDATE_NOT_FOUND', 'entity': 'tag', 'id': data['id']})
-                
-                elif op_type == 'DELETE':
-                    # Delete tag
-                    file_data = read_json_file(tags_file)
-                    tags = file_data['data']
-                    tag_index = next((i for i, t in enumerate(tags) if t['id'] == data['id']), None)
-                    
-                    if tag_index is not None:
-                        tags.pop(tag_index)
-                        if write_json_file(tags_file, tags):
-                            results.append({'type': 'DELETE_SUCCESS', 'entity': 'tag', 'id': data['id']})
-                        else:
-                            results.append({'type': 'DELETE_FAILED', 'entity': 'tag', 'id': data['id']})
-                    else:
-                        results.append({'type': 'DELETE_NOT_FOUND', 'entity': 'tag', 'id': data['id']})
-                
+            filepath = get_file_for(entity, list_type)
+            if not filepath:
+                results.append({'type': 'ERROR', 'entity': entity,
+                               'error': f'Invalid entity/list_type: {entity}/{list_type}'})
+                continue
+            _sync_operation(filepath, op_type, entity, data, results, conflicts)
         except Exception as e:
             results.append({'type': 'ERROR', 'entity': entity, 'error': str(e)})
     
@@ -757,8 +543,8 @@ if __name__ == '__main__':
                 'tagIds': ['tag4'],
                 'subtasks': [{'id': 'sub1', 'name': 'Buy milk', 'done': False}],
                 'done': False,
-                'created_at': int(datetime.now().timestamp() * 1000),
-                'updated_at': int(datetime.now().timestamp() * 1000),
+                'created_at': now_ms(),
+                'updated_at': now_ms(),
             },
             {
                 'id': 'task2',
@@ -768,8 +554,8 @@ if __name__ == '__main__':
                 'tagIds': ['tag1', 'tag3'],
                 'subtasks': [],
                 'done': False,
-                'created_at': int(datetime.now().timestamp() * 1000),
-                'updated_at': int(datetime.now().timestamp() * 1000),
+                'created_at': now_ms(),
+                'updated_at': now_ms(),
             },
             {
                 'id': 'task3',
@@ -779,8 +565,8 @@ if __name__ == '__main__':
                 'tagIds': ['tag2'],
                 'subtasks': [{'id': 'sub2', 'name': 'Chapter 5', 'done': True}],
                 'done': False,
-                'created_at': int(datetime.now().timestamp() * 1000),
-                'updated_at': int(datetime.now().timestamp() * 1000),
+                'created_at': now_ms(),
+                'updated_at': now_ms(),
             }
         ]
         write_json_file(TASKS_FILE, sample_tasks)

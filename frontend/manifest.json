@@ -1,0 +1,1 @@
+{"name": "Task App - One Life One List", "short_name": "TaskApp", "description": "A simple task management app with offline support and synchronization", "start_url": "/", "display": "standalone", "background_color": "#ffffff", "theme_color": "#485fc7", "orientation": "portrait-primary", "scope": "/", "lang": "en"}

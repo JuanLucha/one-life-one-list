@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>One Life One List</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#485fc7">
+</head>
+
+<body>
+  <section class="section">
+    <div class="container">
+      <div class="is-flex is-justify-content-space-between is-align-items-center mb-4">
+        <h1 class="title">One Life One List</h1>
+
+        <!-- Desktop Navigation Tabs -->
+        <div class="desktop-nav-tabs">
+          <button class="tab-button active" data-list="main">
+            <span class="icon"><i class="fas fa-list"></i></span>
+            <span>Lista</span>
+          </button>
+          <button class="tab-button" data-list="daily">
+            <span class="icon"><i class="fas fa-sun"></i></span>
+            <span>Diarias</span>
+          </button>
+          <button class="tab-button" data-list="weekly">
+            <span class="icon"><i class="fas fa-calendar-week"></i></span>
+            <span>Semanales</span>
+          </button>
+          <button class="tab-button" data-list="monthly">
+            <span class="icon"><i class="fas fa-calendar-alt"></i></span>
+            <span>Mensuales</span>
+          </button>
+        </div>
+      </div>
+
+      <div id="new-task-view" class="is-hidden">
+        <div class="field">
+          <label class="label">Name</label>
+          <div class="control">
+            <input id="new-task-name" class="input" type="text" placeholder="Task name">
+          </div>
+          <p id="new-task-error" class="help is-danger is-hidden">Task name is required.</p>
+        </div>
+        <div class="field">
+          <label class="label">Description</label>
+          <div class="control">
+            <textarea id="new-task-description" class="textarea" placeholder="Task description"></textarea>
+          </div>
+        </div>
+        <div class="field">
+          <label class="label">Category</label>
+          <div id="new-task-category-pills" class="field is-grouped is-grouped-multiline">
+          </div>
+          <div class="field has-addons">
+            <div class="control is-expanded">
+              <input id="new-task-new-category" class="input" type="text" placeholder="Or create a new one">
+            </div>
+            <div class="control">
+              <button id="add-category-button" class="button is-info">Add</button>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label class="label">Tags</label>
+          <div id="new-task-tag-pills" class="field is-grouped is-grouped-multiline">
+          </div>
+          <div class="field has-addons">
+            <div class="control is-expanded">
+              <input id="new-task-new-tag" class="input" type="text" placeholder="Create a new tag">
+            </div>
+            <div class="control">
+              <button id="add-tag-button" class="button is-info">Add</button>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label class="label">Subtasks</label>
+          <div id="new-task-subtasks" class="control">
+          </div>
+          <div class="field has-addons">
+            <div class="control">
+              <input id="new-task-new-subtask" class="input" type="text" placeholder="New subtask">
+            </div>
+            <div class="control">
+              <button id="add-subtask-button" class="button is-info">Add</button>
+            </div>
+          </div>
+        </div>
+        <div class="field is-grouped is-justify-content-flex-end">
+          <div class="control">
+            <button id="save-task-button" class="button is-primary">Save</button>
+          </div>
+          <div class="control">
+            <button id="cancel-button" class="button is-light">Cancel</button>
+          </div>
+          <div class="control">
+            <button id="delete-task-button" class="button is-danger is-hidden">Delete</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="list-view">
+        <div id="filters" class="mb-4">
+          <div class="field is-grouped is-grouped-multiline" id="category-filters">
+            <div class="control">
+              <button id="reset-filters-button" class="button is-light">Reset Filters</button>
+            </div>
+          </div>
+          <div class="field is-grouped is-grouped-multiline" id="tag-filters"></div>
+        </div>
+
+        <ul id="task-list"></ul>
+
+        <h2 class="title is-4 mt-5">Completed Tasks</h2>
+        <ul id="completed-task-list"></ul>
+      </div>
+
+      <div id="categories-view" class="is-hidden">
+        <div class="field">
+          <div class="control">
+            <button id="back-to-list-from-categories" class="button is-light" data-back-button="true">← Back to
+              Tasks</button>
+          </div>
+        </div>
+
+        <h2 class="title is-4">Manage Categories</h2>
+
+        <!-- Add New Category -->
+        <div class="box">
+          <h3 class="subtitle is-5">Add New Category</h3>
+          <div class="field has-addons">
+            <div class="control is-expanded">
+              <input id="new-category-input" class="input" type="text" placeholder="Category name">
+            </div>
+            <div class="control">
+              <button id="add-category-manage-button" class="button is-primary">Add</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Categories List -->
+        <div class="box">
+          <h3 class="subtitle is-5">Existing Categories</h3>
+          <div id="categories-list"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Mobile Navigation Bar -->
+  <nav class="mobile-nav">
+    <div class="nav-item active" data-list="main">
+      <div class="nav-icon">
+        <i class="fas fa-list"></i>
+      </div>
+      <span class="nav-label">Lista</span>
+    </div>
+    <div class="nav-item" data-list="daily">
+      <div class="nav-icon">
+        <i class="fas fa-sun"></i>
+      </div>
+      <span class="nav-label">Diarias</span>
+    </div>
+    <div class="nav-item" data-list="weekly">
+      <div class="nav-icon">
+        <i class="fas fa-calendar-week"></i>
+      </div>
+      <span class="nav-label">Semanales</span>
+    </div>
+    <div class="nav-item" data-list="monthly">
+      <div class="nav-icon">
+        <i class="fas fa-calendar-alt"></i>
+      </div>
+      <span class="nav-label">Mensuales</span>
+    </div>
+  </nav>
+
+  <!-- Floating Action Buttons Container -->
+  <div class="fab-container">
+    <button id="sync-button" class="fab sync" title="Sync Status">
+      <span class="icon"><i class="fas fa-cloud"></i></span>
+    </button>
+    <button id="new-task-button" class="fab" title="New Task">
+      <span class="icon">+</span>
+    </button>
+  </div>
+
+  <script type="module" src="/router.js"></script>
+  <script type="module" src="/db.js"></script>
+  <script type="module" src="/api.js"></script>
+  <script type="module" src="/app.js"></script>
+</body>
+
+</html>

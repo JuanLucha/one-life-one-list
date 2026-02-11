@@ -475,7 +475,7 @@ def update_last_reset_time(task_type):
         if 'data' not in reset_data:
             reset_data['data'] = {}
         
-        reset_data['data'][task_type] = datetime.now().toDateString()
+        reset_data['data'][task_type] = datetime.now().isoformat()
         write_json_file(LAST_RESET_FILE, reset_data['data'])
     except Exception as e:
         print(f"Error updating last reset time: {e}")

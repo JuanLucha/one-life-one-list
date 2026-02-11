@@ -508,6 +508,7 @@ class TaskDB {
 
   // Bulk operations for sync
   async bulkSaveTasks(tasks) {
+    if (tasks.length === 0) return true;
     return new Promise((resolve, reject) => {
       const transaction = this.db.transaction(['tasks'], 'readwrite');
       const store = transaction.objectStore('tasks');
@@ -529,6 +530,7 @@ class TaskDB {
   }
 
   async bulkSaveCategories(categories) {
+    if (categories.length === 0) return true;
     return new Promise((resolve, reject) => {
       const transaction = this.db.transaction(['categories'], 'readwrite');
       const store = transaction.objectStore('categories');
@@ -550,6 +552,7 @@ class TaskDB {
   }
 
   async bulkSaveTags(tags) {
+    if (tags.length === 0) return true;
     return new Promise((resolve, reject) => {
       const transaction = this.db.transaction(['tags'], 'readwrite');
       const store = transaction.objectStore('tags');
@@ -572,6 +575,7 @@ class TaskDB {
 
   // Bulk operations for specific list types
   async bulkSaveTasksToList(tasks, listType) {
+    if (tasks.length === 0) return true;
     return new Promise((resolve, reject) => {
       const storeName = listType === 'main' ? 'tasks' : `${listType}Tasks`;
       const transaction = this.db.transaction([storeName], 'readwrite');
@@ -606,6 +610,7 @@ class TaskDB {
   }
 
   async bulkSaveCategoriesToList(categories, listType) {
+    if (categories.length === 0) return true;
     return new Promise((resolve, reject) => {
       const storeName = listType === 'main' ? 'categories' : `${listType}Categories`;
       const transaction = this.db.transaction([storeName], 'readwrite');
@@ -628,6 +633,7 @@ class TaskDB {
   }
 
   async bulkSaveTagsToList(tags, listType) {
+    if (tags.length === 0) return true;
     return new Promise((resolve, reject) => {
       const storeName = listType === 'main' ? 'tags' : `${listType}Tags`;
       const transaction = this.db.transaction([storeName], 'readwrite');

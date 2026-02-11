@@ -764,6 +764,8 @@ const newSubtaskInput = document.getElementById('new-task-new-subtask');
 const addSubtaskButton = document.getElementById('add-subtask-button');
 const addTagButton = document.getElementById('add-tag-button');
 const syncButton = document.getElementById('sync-button');
+const fastTaskInput = document.getElementById('fast-task-input');
+const fastTaskButton = document.getElementById('fast-task-button');
 const newTaskButton = document.getElementById('new-task-button');
 const saveTaskButton = document.getElementById('save-task-button');
 const cancelButton = document.getElementById('cancel-button');
@@ -1086,6 +1088,23 @@ async function updateTask(id, patch, listType = 'main') {
   Object.assign(task, patch, { updatedAt: Date.now() });
   await saveTask(task, listType);
 }
+async function fastCreateTask() {
+  const name = fastTaskInput.value.trim();
+  if (!name) return;
+
+  const categoryId = state.filters.selectedCategoryId === 'others' ? null : (state.filters.selectedCategoryId || null);
+  const tagIds = [...state.filters.selectedTagIds];
+
+  try {
+    await createTask({ name, description: '', categoryId, tagIds, subtasks: [] }, state.currentList);
+    fastTaskInput.value = '';
+    fastTaskInput.focus();
+    render();
+  } catch (error) {
+    console.error('Fast task creation failed:', error);
+  }
+}
+
 async function toggleTaskDone(id) {
   const listData = getCurrentListData();
   const task = listData.tasks.find(t => t.id === id);
@@ -1748,8 +1767,19 @@ async function bootApp() {
       .catch(() => { });
   }
 
+  // Fast-Task input: Enter to create, button click to create
+  fastTaskInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') fastCreateTask();
+  });
+  fastTaskButton.addEventListener('click', () => fastCreateTask());
+
+  // New Task button: open full modal only if fast-input is empty
   newTaskButton.addEventListener('click', () => {
-    if (window.router) window.router.navigate('/new');
+    if (fastTaskInput.value.trim()) {
+      fastCreateTask();
+    } else {
+      if (window.router) window.router.navigate('/new');
+    }
   });
   cancelButton.addEventListener('click', () => {
     if (window.router) window.router.navigate('/');

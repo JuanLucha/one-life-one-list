@@ -607,6 +607,24 @@
   white-space: nowrap;
 }
 
+/* Fast-Task Input Bar */
+.fast-task-bar {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+.fast-task-field {
+  margin-bottom: 0;
+}
+
+.fast-task-bar .input {
+  border-radius: 6px 0 0 6px;
+}
+
+.fast-task-bar .button {
+  border-radius: 0 6px 6px 0;
+}
+
 /* Fixed bottom buttons for task form */
 #new-task-view .field.is-grouped.is-justify-content-flex-end {
   position: fixed;

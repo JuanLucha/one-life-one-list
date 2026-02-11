@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.venv
+venv/
+.env
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.windsurf
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Data (runtime, not source)
+backend/data/
+
+# Node
+node_modules/
+
+# Backups (local)
+backups/

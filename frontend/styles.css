@@ -1,3 +1,39 @@
+/* Login Overlay */
+.login-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.login-card {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  width: 100%;
+  max-width: 360px;
+  margin: 1rem;
+}
+
+.login-card .title {
+  margin-bottom: 0.25rem;
+}
+
+.login-card .subtitle {
+  margin-bottom: 1.5rem;
+}
+
+.login-card .button {
+  margin-top: 1rem;
+}
+
 /* Custom Styles */
 :root {
   --purple-light: #e8e5ff;

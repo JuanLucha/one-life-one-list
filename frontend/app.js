@@ -1635,6 +1635,89 @@ function createSubtaskElement(subtask) {
 // -----------------------
 
 document.addEventListener('DOMContentLoaded', async () => {
+  // --- Authentication ---
+  const loginOverlay = document.getElementById('login-overlay');
+  const loginButton = document.getElementById('login-button');
+  const loginInput = document.getElementById('login-token-input');
+  const loginError = document.getElementById('login-error');
+
+  async function checkAuth() {
+    try {
+      const { TaskAPI: _API } = await import('./api.js');
+      const tempApi = new _API();
+      const storedToken = tempApi.getToken();
+      const result = await tempApi.verifyToken(storedToken);
+      return result.authenticated === true;
+    } catch {
+      return false;
+    }
+  }
+
+  function showLogin() {
+    loginOverlay.classList.remove('is-hidden');
+    loginInput.focus();
+  }
+
+  function hideLogin() {
+    loginOverlay.classList.add('is-hidden');
+  }
+
+  async function handleLogin() {
+    const token = loginInput.value.trim();
+    if (!token) {
+      loginError.textContent = 'Please enter a token';
+      loginError.classList.remove('is-hidden');
+      return;
+    }
+    loginButton.classList.add('is-loading');
+    loginError.classList.add('is-hidden');
+    try {
+      const { TaskAPI: _API } = await import('./api.js');
+      const tempApi = new _API();
+      const result = await tempApi.verifyToken(token);
+      if (result.authenticated) {
+        tempApi.setToken(token);
+        hideLogin();
+        await bootApp();
+      } else {
+        loginError.textContent = 'Invalid token';
+        loginError.classList.remove('is-hidden');
+      }
+    } catch {
+      loginError.textContent = 'Connection error';
+      loginError.classList.remove('is-hidden');
+    }
+    loginButton.classList.remove('is-loading');
+  }
+
+  loginButton.addEventListener('click', handleLogin);
+  loginInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleLogin(); });
+
+  // Listen for 401s from api.js at any point
+  window.addEventListener('auth-required', () => showLogin());
+
+  // Check if auth is needed
+  const authed = await checkAuth();
+  if (!authed) {
+    // Check if server even requires auth (no token configured)
+    try {
+      const { TaskAPI: _API } = await import('./api.js');
+      const tempApi = new _API();
+      const result = await tempApi.verifyToken('');
+      if (result.authenticated) {
+        hideLogin();
+        await bootApp();
+        return;
+      }
+    } catch { /* server unreachable, boot offline */ }
+    showLogin();
+    return;
+  }
+  hideLogin();
+  await bootApp();
+});
+
+async function bootApp() {
   try {
     const { initSync } = await import('./api.js');
     syncManager = await initSync();
@@ -1952,7 +2035,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Setup navigation event listeners
   setupNavigationListeners();
-});
+}
 
 // Setup navigation event listeners
 function setupNavigationListeners() {

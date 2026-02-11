@@ -6,35 +6,56 @@ class TaskAPI {
     this.baseURL = baseURL;
   }
 
-  async request(endpoint, options = {}) {
-    const defaultOptions = {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    };
+  getToken() {
+    return localStorage.getItem('auth_token') || '';
+  }
 
-    const finalOptions = { ...defaultOptions, ...options };
+  setToken(token) {
+    if (token) {
+      localStorage.setItem('auth_token', token);
+    } else {
+      localStorage.removeItem('auth_token');
+    }
+  }
+
+  async verifyToken(token) {
+    const res = await fetch(`${this.baseURL}/api/auth/verify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token }),
+    });
+    return res.json();
+  }
+
+  async request(endpoint, options = {}) {
+    const headers = { 'Content-Type': 'application/json' };
+    const token = this.getToken();
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const finalOptions = { ...options, headers: { ...headers, ...(options.headers || {}) } };
 
     try {
       const response = await fetch(`${this.baseURL}${endpoint}`, finalOptions);
+
+      if (response.status === 401) {
+        // Dispatch auth failure event for the UI to handle
+        window.dispatchEvent(new CustomEvent('auth-required'));
+        throw new Error('Authentication required');
+      }
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const responseText = await response.text();
-
-      // Parse JSON only if there's content
-      if (responseText.trim() === '') {
-        return null;
-      }
+      if (responseText.trim() === '') return null;
 
       try {
         return JSON.parse(responseText);
       } catch (parseError) {
-        console.error('❌ JSON parse error:', parseError);
-        console.error('❌ Response that failed to parse:', responseText);
-        throw new Error(`JSON.parse: unexpected character at line 1 column 1 of the JSON data`);
+        throw new Error('Failed to parse JSON response');
       }
     } catch (error) {
       console.error('API request failed:', error);
@@ -514,4 +535,4 @@ export async function initSync() {
   }
 }
 
-export { api, syncManager };
+export { TaskAPI, api, syncManager };

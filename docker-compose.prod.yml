@@ -12,6 +12,7 @@ services:
     environment:
       - FLASK_ENV=production
       - FLASK_APP=app.py
+      - AUTH_TOKEN=${AUTH_TOKEN:-}
     restart: always
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5005/api/health"]

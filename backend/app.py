@@ -4,9 +4,33 @@ import json
 import os
 from datetime import datetime
 import uuid
+from functools import wraps
 
 app = Flask(__name__)
 CORS(app)
+
+# Authentication
+AUTH_TOKEN = os.environ.get('AUTH_TOKEN', '')
+
+# Public endpoints that don't require authentication
+PUBLIC_ENDPOINTS = {'/api/health', '/api/auth/verify'}
+
+@app.before_request
+def check_auth():
+    """Require Bearer token on all /api/ routes when AUTH_TOKEN is set."""
+    if not AUTH_TOKEN:
+        return  # No token configured, skip auth
+    if not request.path.startswith('/api/'):
+        return  # Not an API route
+    if request.path in PUBLIC_ENDPOINTS:
+        return  # Public endpoint
+    
+    auth_header = request.headers.get('Authorization', '')
+    if not auth_header.startswith('Bearer '):
+        return jsonify({"error": "Authorization required"}), 401
+    token = auth_header[7:]
+    if token != AUTH_TOKEN:
+        return jsonify({"error": "Invalid token"}), 401
 
 # Configuration
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
@@ -109,6 +133,16 @@ def now_ms():
 @app.route('/api/health', methods=['GET'])
 def health_check():
     return jsonify({"status": "ok", "timestamp": datetime.now().isoformat()})
+
+@app.route('/api/auth/verify', methods=['POST'])
+def verify_auth():
+    """Verify a token. Returns success if token matches or no AUTH_TOKEN is configured."""
+    if not AUTH_TOKEN:
+        return jsonify({"authenticated": True, "message": "No authentication required"})
+    token = (request.json or {}).get('token', '')
+    if token == AUTH_TOKEN:
+        return jsonify({"authenticated": True})
+    return jsonify({"authenticated": False, "error": "Invalid token"}), 401
 
 @app.route('/api/tasks', methods=['GET'])
 def get_tasks():

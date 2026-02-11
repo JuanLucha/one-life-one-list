@@ -1,5 +1,8 @@
-const CACHE_NAME = 'task-app-v8';
-const STATIC_CACHE = 'task-app-static-v8';
+const CACHE_NAME = 'task-app-v9';
+const STATIC_CACHE = 'task-app-static-v9';
+
+// Static asset extensions that should use cache-first
+const STATIC_EXT = /\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|json)$/;
 
 // Files to cache for offline functionality
 const STATIC_FILES = [
@@ -15,103 +18,65 @@ const STATIC_FILES = [
 
 // Install event - cache static files
 self.addEventListener('install', (event) => {
-  console.log('Service Worker: Installing...');
-
   event.waitUntil(
     caches.open(STATIC_CACHE)
-      .then((cache) => {
-        console.log('Service Worker: Caching static files');
-        return cache.addAll(STATIC_FILES);
-      })
-      .then(() => {
-        console.log('Service Worker: Static files cached');
-        return self.skipWaiting();
-      })
-      .catch((error) => {
-        console.error('Service Worker: Failed to cache static files:', error);
-      })
+      .then((cache) => cache.addAll(STATIC_FILES))
+      .then(() => self.skipWaiting())
   );
 });
 
 // Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
-  console.log('Service Worker: Activating...');
-
   event.waitUntil(
     caches.keys()
       .then((cacheNames) => {
         return Promise.all(
-          cacheNames.map((cacheName) => {
-            if (cacheName !== STATIC_CACHE && cacheName !== CACHE_NAME) {
-              console.log('Service Worker: Deleting old cache:', cacheName);
-              return caches.delete(cacheName);
-            }
-          })
+          cacheNames
+            .filter((name) => name !== STATIC_CACHE && name !== CACHE_NAME)
+            .map((name) => caches.delete(name))
         );
       })
-      .then(() => {
-        console.log('Service Worker: Activated');
-        return self.clients.claim();
-      })
+      .then(() => self.clients.claim())
   );
 });
 
-// Fetch event - serve from cache when offline
+// Fetch event - SPA-aware routing
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
   // Skip non-GET requests
-  if (event.request.method !== 'GET') {
-    return;
-  }
+  if (event.request.method !== 'GET') return;
 
-  // Handle API requests differently
+  // API requests: network-first
   if (url.pathname.startsWith('/api/')) {
     handleApiRequest(event);
     return;
   }
 
-  // Handle static files - cache first strategy
+  // Navigation requests (HTML pages / deep-links): always serve index.html
+  // This is the key fix for SPA deep-linking support
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .catch(() => caches.match('/index.html'))
+    );
+    return;
+  }
+
+  // Static assets: cache-first
   event.respondWith(
     caches.match(event.request)
-      .then((response) => {
-        // Return cached version if available
-        if (response) {
+      .then((cached) => {
+        if (cached) return cached;
+        return fetch(event.request).then((response) => {
+          if (response && response.status === 200 && response.type === 'basic') {
+            const clone = response.clone();
+            caches.open(STATIC_CACHE).then((cache) => cache.put(event.request, clone));
+          }
           return response;
-        }
-
-        // Otherwise fetch from network
-        return fetch(event.request)
-          .then((response) => {
-            // Don't cache non-successful responses
-            if (!response || response.status !== 200 || response.type !== 'basic') {
-              return response;
-            }
-
-            // Clone the response since it can only be consumed once
-            const responseToCache = response.clone();
-
-            // Cache the response for future use
-            caches.open(STATIC_CACHE)
-              .then((cache) => {
-                cache.put(event.request, responseToCache);
-              });
-
-            return response;
-          })
-          .catch(() => {
-            // If offline and request is for HTML page, serve cached index.html
-            if (event.request.destination === 'document') {
-              return caches.match('/index.html');
-            }
-
-            // Otherwise return appropriate offline page or error
-            return new Response('Offline - No cached version available', {
-              status: 503,
-              statusText: 'Service Unavailable'
-            });
-          });
+        });
       })
+      .catch(() => new Response('Offline', { status: 503 }))
   );
 });
 
@@ -164,8 +129,6 @@ function handleApiRequest(event) {
 
 // Background sync for offline operations
 self.addEventListener('sync', (event) => {
-  console.log('Service Worker: Sync event triggered:', event.tag);
-
   if (event.tag === 'sync-tasks') {
     event.waitUntil(syncTasks());
   }
@@ -174,23 +137,12 @@ self.addEventListener('sync', (event) => {
 // Sync tasks with server
 async function syncTasks() {
   try {
-    console.log('Service Worker: Starting background sync...');
-
-    // Get all clients to trigger sync in the app
     const clients = await self.clients.matchAll();
-
-    // Send message to clients to trigger sync
     for (const client of clients) {
-      client.postMessage({
-        type: 'SYNC_TRIGGERED',
-        tag: 'sync-tasks'
-      });
+      client.postMessage({ type: 'SYNC_TRIGGERED', tag: 'sync-tasks' });
     }
-
-    console.log('Service Worker: Background sync completed');
     return true;
   } catch (error) {
-    console.error('Service Worker: Background sync failed:', error);
     return false;
   }
 }
@@ -199,15 +151,12 @@ async function syncTasks() {
 // Periodic sync for regular updates (if supported)
 self.addEventListener('periodicsync', (event) => {
   if (event.tag === 'sync-tasks-periodic') {
-    console.log('Service Worker: Periodic sync triggered');
     event.waitUntil(syncTasks());
   }
 });
 
 // Handle messages from main thread
 self.addEventListener('message', (event) => {
-  console.log('Service Worker: Message received:', event.data);
-
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
   }

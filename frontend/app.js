@@ -492,20 +492,6 @@ function updateSyncStatus(status) {
   }
 }
 
-/**
- * Get human-readable status text
- * @param {string} status 
- * @returns {string}
- */
-function getStatusText(status) {
-  switch (status) {
-    case 'syncing': return 'Syncing...';
-    case 'synced': return 'Synced';
-    case 'offline': return 'Offline';
-    case 'error': return 'Sync Error';
-    default: return 'Unknown';
-  }
-}
 
 // -----------------------
 // Task Operations
@@ -775,14 +761,11 @@ const categoriesView = document.getElementById('categories-view');
 const newTaskError = document.getElementById('new-task-error');
 const newTaskNameInput = document.getElementById('new-task-name');
 const newTaskDescriptionInput = document.getElementById('new-task-description');
-const newTaskCategorySelect = document.getElementById('new-task-category');
 const newTaskNewCategoryInput = document.getElementById('new-task-new-category');
-const newTaskTagsContainer = document.getElementById('new-task-tags');
 const newTaskNewTagInput = document.getElementById('new-task-new-tag');
 const newTaskSubtasksContainer = document.getElementById('new-task-subtasks');
 const newSubtaskInput = document.getElementById('new-task-new-subtask');
 const addSubtaskButton = document.getElementById('add-subtask-button');
-const resetFiltersButton = document.getElementById('reset-filters-button');
 const addTagButton = document.getElementById('add-tag-button');
 const syncButton = document.getElementById('sync-button');
 const newTaskButton = document.getElementById('new-task-button');
@@ -1136,7 +1119,6 @@ async function toggleTaskDone(id) {
     render();
   }
 }
-function toggleSubtaskDone(taskId, subtaskId) { }
 function getFilteredTasks({ selectedCategoryId, selectedTagIds = [] }, tasks = null) {
   const tasksToFilter = tasks || state.tasks;
   return tasksToFilter.filter(task => {

@@ -5,21 +5,29 @@ import os
 from datetime import datetime
 import uuid
 from functools import wraps
+import hmac
 
 app = Flask(__name__)
 CORS(app)
 
-# Authentication
+# Authentication – AUTH_TOKEN is **mandatory**
 AUTH_TOKEN = os.environ.get('AUTH_TOKEN', '')
+if not AUTH_TOKEN:
+    raise RuntimeError(
+        'AUTH_TOKEN environment variable is required. '
+        'Set it before starting the server.'
+    )
 
 # Public endpoints that don't require authentication
 PUBLIC_ENDPOINTS = {'/api/health', '/api/auth/verify'}
 
+def _token_matches(provided: str) -> bool:
+    """Timing-safe token comparison."""
+    return hmac.compare_digest(provided.encode(), AUTH_TOKEN.encode())
+
 @app.before_request
 def check_auth():
-    """Require Bearer token on all /api/ routes when AUTH_TOKEN is set."""
-    if not AUTH_TOKEN:
-        return  # No token configured, skip auth
+    """Require Bearer token on all /api/ routes (always enforced)."""
     if not request.path.startswith('/api/'):
         return  # Not an API route
     if request.path in PUBLIC_ENDPOINTS:
@@ -29,7 +37,7 @@ def check_auth():
     if not auth_header.startswith('Bearer '):
         return jsonify({"error": "Authorization required"}), 401
     token = auth_header[7:]
-    if token != AUTH_TOKEN:
+    if not _token_matches(token):
         return jsonify({"error": "Invalid token"}), 401
 
 # Configuration
@@ -136,11 +144,9 @@ def health_check():
 
 @app.route('/api/auth/verify', methods=['POST'])
 def verify_auth():
-    """Verify a token. Returns success if token matches or no AUTH_TOKEN is configured."""
-    if not AUTH_TOKEN:
-        return jsonify({"authenticated": True, "message": "No authentication required"})
+    """Verify a token. Always requires a valid token."""
     token = (request.json or {}).get('token', '')
-    if token == AUTH_TOKEN:
+    if token and _token_matches(token):
         return jsonify({"authenticated": True})
     return jsonify({"authenticated": False, "error": "Invalid token"}), 401
 

@@ -1,5 +1,5 @@
-const CACHE_NAME = 'task-app-v9';
-const STATIC_CACHE = 'task-app-static-v9';
+const CACHE_NAME = 'task-app-v10';
+const STATIC_CACHE = 'task-app-static-v10';
 
 // Static asset extensions that should use cache-first
 const STATIC_EXT = /\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|json)$/;
@@ -13,6 +13,9 @@ const STATIC_FILES = [
   '/app.js',
   '/db.js',
   '/api.js',
+  '/manifest.json',
+  '/icons/icon-192.svg',
+  '/icons/icon-512.svg',
   'https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css'
 ];
 

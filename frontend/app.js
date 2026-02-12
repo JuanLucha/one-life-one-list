@@ -880,6 +880,17 @@ function renderUI() {
       syncButton.classList.add('is-hidden');
     }
   }
+
+  // Logout FAB should only be visible on root route
+  const logoutBtn = document.getElementById('logout-button');
+  if (logoutBtn) {
+    const isRootRoute = window.location.pathname === '/';
+    if (isRootRoute && state.uiMode === 'list') {
+      logoutBtn.classList.remove('is-hidden');
+    } else {
+      logoutBtn.classList.add('is-hidden');
+    }
+  }
 }
 
 function renderTaskList() {
@@ -1712,23 +1723,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   loginButton.addEventListener('click', handleLogin);
   loginInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleLogin(); });
 
-  // Listen for 401s from api.js at any point
-  window.addEventListener('auth-required', () => showLogin());
+  // Listen for 401s from api.js at any point – clear stale token and show login
+  window.addEventListener('auth-required', async () => {
+    try {
+      const { api: _api } = await import('./api.js');
+      _api.setToken(null);
+    } catch { /* ignore */ }
+    showLogin();
+  });
 
-  // Check if auth is needed
+  // Always check auth – token is mandatory
   const authed = await checkAuth();
   if (!authed) {
-    // Check if server even requires auth (no token configured)
-    try {
-      const { TaskAPI: _API } = await import('./api.js');
-      const tempApi = new _API();
-      const result = await tempApi.verifyToken('');
-      if (result.authenticated) {
-        hideLogin();
-        await bootApp();
-        return;
-      }
-    } catch { /* server unreachable, boot offline */ }
     showLogin();
     return;
   }
@@ -1784,6 +1790,17 @@ async function bootApp() {
   cancelButton.addEventListener('click', () => {
     if (window.router) window.router.navigate('/');
   });
+
+  // Logout button
+  const logoutButton = document.getElementById('logout-button');
+  if (logoutButton) {
+    logoutButton.addEventListener('click', () => {
+      const { api: _api } = import('./api.js').then(m => {
+        m.api.setToken(null);
+        window.location.reload();
+      });
+    });
+  }
 
   // Sync button
   syncButton.addEventListener('click', async () => {

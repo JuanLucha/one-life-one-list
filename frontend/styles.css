@@ -204,6 +204,21 @@ h2.title {
   justify-content: center;
 }
 
+.fab.logout {
+  background-color: var(--gray-100);
+  color: var(--gray-500);
+  border: 1px solid var(--gray-200);
+  width: 2.5rem;
+  height: 2.5rem;
+  font-size: 1rem;
+}
+
+.fab.logout:hover {
+  background-color: var(--red-light);
+  color: var(--red-strong);
+  border-color: var(--red-strong);
+}
+
 .fab.sync {
   background-color: var(--orange-light);
   color: var(--orange-strong);

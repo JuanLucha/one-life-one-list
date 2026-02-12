@@ -17,7 +17,7 @@
 
 <body>
   <!-- Login Overlay -->
-  <div id="login-overlay" class="login-overlay is-hidden">
+  <div id="login-overlay" class="login-overlay">
     <div class="login-card">
       <h2 class="title is-4 has-text-centered">One Life One List</h2>
       <p class="subtitle is-6 has-text-centered has-text-grey">Enter your access token</p>
@@ -32,7 +32,7 @@
     </div>
   </div>
 
-  <section class="section">
+  <section id="app-content" class="section is-hidden">
     <div class="container">
       <div class="is-flex is-justify-content-space-between is-align-items-center mb-4">
         <h1 class="title">One Life One List</h1>
@@ -187,7 +187,7 @@
   </section>
 
   <!-- Mobile Navigation Bar -->
-  <nav class="mobile-nav">
+  <nav id="mobile-nav" class="mobile-nav is-hidden">
     <div class="nav-item active" data-list="main">
       <div class="nav-icon">
         <i class="fas fa-list"></i>
@@ -215,7 +215,7 @@
   </nav>
 
   <!-- Floating Action Buttons Container -->
-  <div class="fab-container">
+  <div id="fab-container" class="fab-container is-hidden">
     <button id="logout-button" class="fab logout" title="Logout">
       <span class="icon"><i class="fas fa-sign-out-alt"></i></span>
     </button>

@@ -1685,11 +1685,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function showLogin() {
     loginOverlay.classList.remove('is-hidden');
+    document.getElementById('app-content').classList.add('is-hidden');
+    document.getElementById('mobile-nav').classList.add('is-hidden');
+    document.getElementById('fab-container').classList.add('is-hidden');
     loginInput.focus();
   }
 
   function hideLogin() {
     loginOverlay.classList.add('is-hidden');
+    document.getElementById('app-content').classList.remove('is-hidden');
+    document.getElementById('mobile-nav').classList.remove('is-hidden');
+    document.getElementById('fab-container').classList.remove('is-hidden');
   }
 
   async function handleLogin() {

@@ -125,10 +125,37 @@ h2.title {
   background-color: var(--blue-light);
   color: var(--blue-strong);
   border: 1px solid var(--blue-strong);
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.85rem;
+  font-size: 0.85rem;
+  height: 36px;
+}
+
+.button.category-manage .icon {
+  line-height: 1;
 }
 
 .button.category-manage:hover {
   background-color: var(--blue-strong);
+  color: white;
+}
+
+.button.category-edit {
+  background-color: var(--purple-light);
+  color: var(--purple-strong);
+  border: 1px solid var(--purple-strong);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.875rem;
+}
+
+.button.category-edit:hover {
+  background-color: var(--purple-strong);
   color: white;
 }
 

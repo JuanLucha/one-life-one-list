@@ -1015,7 +1015,7 @@ function renderFilters() {
 
   // Add Manage Categories button at the end
   const manageCategoriesButton = document.createElement('button');
-  manageCategoriesButton.className = 'button category-manage';
+  manageCategoriesButton.className = 'button category-pill category-manage';
   manageCategoriesButton.innerHTML = '<span class="icon"><i class="fas fa-edit"></i></span>';
   manageCategoriesButton.title = 'Manage Categories';
   manageCategoriesButton.addEventListener('click', () => {
@@ -1355,8 +1355,8 @@ function renderCategoriesList() {
 
     // Create edit button
     const editBtn = document.createElement('button');
-    editBtn.className = 'button is-small is-info edit-category-btn';
-    editBtn.textContent = 'Edit';
+    editBtn.className = 'button category-edit edit-category-btn';
+    editBtn.innerHTML = '<span class="icon"><i class="fas fa-pen"></i></span><span>Editar</span>';
 
     // Create delete button
     const deleteBtn = document.createElement('button');

@@ -18,25 +18,53 @@ if not AUTH_TOKEN:
         'Set it before starting the server.'
     )
 
+
+def _get_auth_token() -> str:
+    """Read AUTH_TOKEN fresh to avoid stale value after reloads in tests."""
+    token = os.environ.get('AUTH_TOKEN', '')
+    if not token:
+        raise RuntimeError(
+            'AUTH_TOKEN environment variable is required. '
+            'Set it before starting the server.'
+        )
+    return token
+
 # Public endpoints that don't require authentication
 PUBLIC_ENDPOINTS = {'/api/health', '/api/auth/verify'}
 
 def _token_matches(provided: str) -> bool:
     """Timing-safe token comparison."""
-    return hmac.compare_digest(provided.encode(), AUTH_TOKEN.encode())
+    return hmac.compare_digest(provided.encode(), _get_auth_token().encode())
 
 @app.before_request
 def check_auth():
     """Require Bearer token on all /api/ routes (always enforced)."""
     if not request.path.startswith('/api/'):
         return  # Not an API route
+    if request.method == 'OPTIONS':
+        # Let CORS preflight pass with permissive headers
+        resp = app.make_default_options_response()
+        h = resp.headers
+        origin = request.headers.get('Origin', '*')
+        req_headers = request.headers.get('Access-Control-Request-Headers', 'Authorization,Content-Type')
+        req_method = request.headers.get('Access-Control-Request-Method', 'GET,POST,PUT,DELETE,OPTIONS')
+        h['Access-Control-Allow-Origin'] = origin
+        h['Access-Control-Allow-Headers'] = req_headers
+        h['Access-Control-Allow-Methods'] = req_method
+        h['Access-Control-Max-Age'] = '86400'
+        return resp
     if request.path in PUBLIC_ENDPOINTS:
         return  # Public endpoint
     
     auth_header = request.headers.get('Authorization', '')
     if not auth_header.startswith('Bearer '):
         return jsonify({"error": "Authorization required"}), 401
-    token = auth_header[7:]
+    token_raw = auth_header[7:]
+    if token_raw != token_raw.strip():
+        return jsonify({"error": "Invalid token"}), 401
+    token = token_raw.strip()
+    if not token:
+        return jsonify({"error": "Authorization required"}), 401
     if not _token_matches(token):
         return jsonify({"error": "Invalid token"}), 401
 
@@ -145,8 +173,18 @@ def health_check():
 @app.route('/api/auth/verify', methods=['POST'])
 def verify_auth():
     """Verify a token. Always requires a valid token."""
-    token = (request.json or {}).get('token', '')
-    if token and _token_matches(token):
+    auth_header = request.headers.get('Authorization', '')
+    if not auth_header.startswith('Bearer '):
+        return jsonify({"authenticated": False, "error": "Authorization header required"}), 401
+    
+    token_raw = auth_header[7:]
+    if token_raw != token_raw.strip():
+        return jsonify({"authenticated": False, "error": "Invalid token"}), 401
+    token = token_raw.strip()
+    if not token:
+        return jsonify({"authenticated": False, "error": "Invalid token"}), 401
+
+    if _token_matches(token):
         return jsonify({"authenticated": True})
     return jsonify({"authenticated": False, "error": "Invalid token"}), 401
 

@@ -36,15 +36,35 @@ def client(tmp_path):
     app_module.CATEGORIES_FILE = os.path.join(user_dir, 'categories.json')
     app_module.TAGS_FILE = os.path.join(user_dir, 'tags.json')
 
+    # Create empty data files for main endpoints
+    with open(app_module.TASKS_FILE, 'w') as f:
+        json.dump({'data': []}, f)
+    with open(app_module.CATEGORIES_FILE, 'w') as f:
+        json.dump({'data': []}, f)
+    with open(app_module.TAGS_FILE, 'w') as f:
+        json.dump({'data': []}, f)
+
     # Also update the lookup dicts
     app_module.TASKS_FILES['main'] = app_module.TASKS_FILE
     app_module.CATEGORIES_FILES['main'] = app_module.CATEGORIES_FILE
     app_module.TAGS_FILES['main'] = app_module.TAGS_FILE
 
     for period in ('daily', 'weekly', 'monthly'):
-        app_module.TASKS_FILES[period] = os.path.join(user_dir, f'{period}_tasks.json')
-        app_module.CATEGORIES_FILES[period] = os.path.join(user_dir, f'{period}_categories.json')
-        app_module.TAGS_FILES[period] = os.path.join(user_dir, f'{period}_tags.json')
+        tasks_file = os.path.join(user_dir, f'{period}_tasks.json')
+        categories_file = os.path.join(user_dir, f'{period}_categories.json')
+        tags_file = os.path.join(user_dir, f'{period}_tags.json')
+        
+        # Create empty data files
+        with open(tasks_file, 'w') as f:
+            json.dump({'data': []}, f)
+        with open(categories_file, 'w') as f:
+            json.dump({'data': []}, f)
+        with open(tags_file, 'w') as f:
+            json.dump({'data': []}, f)
+        
+        app_module.TASKS_FILES[period] = tasks_file
+        app_module.CATEGORIES_FILES[period] = categories_file
+        app_module.TAGS_FILES[period] = tags_file
 
     with app.test_client() as client:
         yield client
@@ -94,30 +114,22 @@ class TestPublicEndpoints:
         assert data['status'] == 'ok'
 
     def test_verify_valid_token(self, client):
-        resp = client.post('/api/auth/verify',
-                           json={'token': TOKEN},
-                           content_type='application/json')
+        resp = client.post('/api/auth/verify', headers=AUTH_HEADER)
         assert resp.status_code == 200
         assert resp.get_json()['authenticated'] is True
 
     def test_verify_invalid_token(self, client):
-        resp = client.post('/api/auth/verify',
-                           json={'token': WRONG_TOKEN},
-                           content_type='application/json')
+        resp = client.post('/api/auth/verify', headers=BAD_AUTH_HEADER)
         assert resp.status_code == 401
         assert resp.get_json()['authenticated'] is False
 
     def test_verify_empty_token(self, client):
-        resp = client.post('/api/auth/verify',
-                           json={'token': ''},
-                           content_type='application/json')
+        resp = client.post('/api/auth/verify', headers={'Authorization': 'Bearer '})
         assert resp.status_code == 401
         assert resp.get_json()['authenticated'] is False
 
     def test_verify_no_body(self, client):
-        resp = client.post('/api/auth/verify',
-                           json={},
-                           content_type='application/json')
+        resp = client.post('/api/auth/verify')
         assert resp.status_code == 401
 
 

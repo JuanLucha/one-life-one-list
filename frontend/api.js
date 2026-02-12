@@ -21,8 +21,10 @@ class TaskAPI {
   async verifyToken(token) {
     const res = await fetch(`${this.baseURL}/api/auth/verify`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token }),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
     });
     return res.json();
   }

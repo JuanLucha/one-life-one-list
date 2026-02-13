@@ -174,18 +174,24 @@ def health_check():
 def verify_auth():
     """Verify a token. Always requires a valid token."""
     auth_header = request.headers.get('Authorization', '')
+    print(f"[DEBUG] auth_header repr: {repr(auth_header)}", flush=True)
     if not auth_header.startswith('Bearer '):
+        print("[DEBUG] Missing Bearer prefix", flush=True)
         return jsonify({"authenticated": False, "error": "Authorization header required"}), 401
     
     token_raw = auth_header[7:]
+    print(f"[DEBUG] token_raw repr: {repr(token_raw)}", flush=True)
     if token_raw != token_raw.strip():
+        print(f"[DEBUG] Whitespace mismatch: raw={repr(token_raw)} stripped={repr(token_raw.strip())}", flush=True)
         return jsonify({"authenticated": False, "error": "Invalid token"}), 401
     token = token_raw.strip()
     if not token:
+        print("[DEBUG] Empty token after strip", flush=True)
         return jsonify({"authenticated": False, "error": "Invalid token"}), 401
 
     if _token_matches(token):
         return jsonify({"authenticated": True})
+    print(f"[DEBUG] Token mismatch: provided={repr(token)} expected={repr(_get_auth_token())}", flush=True)
     return jsonify({"authenticated": False, "error": "Invalid token"}), 401
 
 @app.route('/api/tasks', methods=['GET'])

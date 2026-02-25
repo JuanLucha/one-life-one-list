@@ -2,7 +2,7 @@
 import { taskDB } from './db.js';
 
 class TaskAPI {
-  constructor(baseURL = 'http://localhost:5005') {
+  constructor(baseURL = '') {
     this.baseURL = baseURL;
   }
 

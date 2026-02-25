@@ -27,3 +27,11 @@ node_modules/
 
 # Backups (local)
 backups/
+
+# Mobile (Expo / React Native)
+mobile/node_modules/
+mobile/.expo/
+mobile/android/
+mobile/ios/
+mobile/dist/
+mobile/*.apk

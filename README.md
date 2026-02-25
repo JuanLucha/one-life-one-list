@@ -310,11 +310,104 @@ python -m http.server 8000
 - **Frontend**: IndexedDB for offline-first storage with sync queue
 - **Sync**: Bidirectional sync between client and server with conflict resolution
 
+## Mobile App (Android)
+
+A native Android version built with React Native (Expo), located in the `mobile/` directory. It mirrors the web frontend functionality: task management with categories, tags, subtasks, periodic lists (daily/weekly/monthly), and authentication.
+
+### Prerequisites
+- Node.js 18+
+- npm
+- For APK builds: EAS CLI (`npm install -g eas-cli`) and an Expo account, **or** Java 17 SDK for local builds
+
+### Setup
+```bash
+cd mobile
+npm install
+```
+
+### Development
+```bash
+# Start Expo dev server
+npx expo start
+
+# Run on Android emulator or connected device
+npx expo start --android
+```
+
+The app will ask for the **Server URL** (e.g. `http://192.168.1.X:5005`) and the **Auth Token** on first launch.
+
+### Running Tests
+```bash
+cd mobile
+npm test
+```
+
+42 automated tests covering utilities, storage, context/state management, and UI components.
+
+### Building the APK
+
+#### Option A: EAS Build (cloud)
+```bash
+# Install EAS CLI globally
+npm install -g eas-cli
+
+# Login to Expo
+eas login
+
+# Build APK (cloud build)
+eas build -p android --profile preview
+```
+
+#### Option B: Local Build
+```bash
+# Requires Java 17 SDK installed locally
+eas build -p android --profile preview --local
+```
+
+The resulting `.apk` file can be installed directly on any Android device.
+
+### Mobile Project Structure
+```
+mobile/
+├── App.js                    # Entry point
+├── app.json                  # Expo configuration
+├── eas.json                  # EAS Build profiles
+├── package.json              # Dependencies & scripts
+├── jest.setup.js             # Test mocks
+├── src/
+│   ├── api.js                # REST API client
+│   ├── storage.js            # AsyncStorage persistence
+│   ├── theme.js              # Colors, spacing, radius
+│   ├── utils.js              # Shared utilities
+│   ├── context/
+│   │   └── AppContext.js     # Global state (React Context + useReducer)
+│   ├── components/
+│   │   ├── Checkbox.js       # Reusable checkbox
+│   │   ├── Pill.js           # Category/tag pill
+│   │   └── TaskItem.js       # Task list row
+│   ├── navigation/
+│   │   └── AppNavigator.js   # Bottom tabs + stack navigation
+│   └── screens/
+│       ├── LoginScreen.js    # Auth screen
+│       ├── TaskListScreen.js # Main task list with filters & FAB
+│       ├── TaskEditScreen.js # Create/edit task form
+│       └── CategoriesScreen.js # Manage categories
+└── __tests__/                # Automated tests
+    ├── utils.test.js
+    ├── storage.test.js
+    ├── AppContext.test.js
+    └── components/
+        ├── Checkbox.test.js
+        ├── Pill.test.js
+        └── TaskItem.test.js
+```
+
 ## Architecture
 
 - **Backend**: Flask REST API with JSON file storage
 - **Frontend**: Vanilla JavaScript PWA with Bulma CSS
-- **Storage**: IndexedDB (client) + JSON files (server)
+- **Mobile**: React Native (Expo) Android app with React Navigation
+- **Storage**: IndexedDB (web client) + AsyncStorage (mobile) + JSON files (server)
 - **Auth**: Optional Bearer token via `AUTH_TOKEN` env var
 - **Routing**: Client-side SPA router with deep-link support
 - **Service Worker**: SPA-aware fetch handler, background sync, offline caching
